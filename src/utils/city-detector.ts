@@ -1,4 +1,34 @@
 export const cityDetector_func = () => {
+  // Вставляем функции для извлечения города из URL и обновления ссылок
+  function getCityFromCurrentUrl() {
+    const urlPath = window.location.pathname;
+    const cityMatch = urlPath.match(/-(new-york|los-angeles|chicago|houston)$/i);
+    return cityMatch ? cityMatch[1].toLowerCase() : null;
+  }
+
+  function updateLinksForCurrentCity() {
+    const currentCity = getCityFromCurrentUrl();
+
+    if (currentCity) {
+      // Находим все ссылки, которые нужно обновить
+      const linksToUpdate = document.querySelectorAll('[exp-city-dropdown-city-slug]');
+
+      linksToUpdate.forEach((link) => {
+        const linkCity = link.getAttribute('exp-city-dropdown-city-slug');
+        const baseHref = link.getAttribute('href');
+
+        if (linkCity !== currentCity) {
+          link.setAttribute(
+            'href',
+            baseHref.replace(/-(new-york|los-angeles|chicago|houston)$/i, `-${currentCity}`)
+          );
+        }
+      });
+    }
+  }
+
+  updateLinksForCurrentCity();
+
   const elements_cityDropdown = document.querySelectorAll('[location-dropdown]');
   const elements_navHomeLinks = document.querySelectorAll('[nav-home-link]');
   const elements_homePageCityLinks = document.querySelectorAll('[home-page-city-links]');
@@ -50,8 +80,6 @@ export const cityDetector_func = () => {
           const response = await fetch('https://get.geojs.io/v1/ip/geo.json');
           const data = await response.json();
 
-          console.log(data);
-
           const { city: respCity } = data;
           if (respCity) {
             let cityMatched = false;
@@ -84,6 +112,12 @@ export const cityDetector_func = () => {
           cityGuess();
         }
       });
+    }
+
+    function getCityFromUrl() {
+      const urlPath = window.location.pathname;
+      const cityMatch = urlPath.match(/-(new-york|los-angeles|chicago|houston)$/i);
+      return cityMatch ? cityMatch[1].toLowerCase() : null;
     }
 
     button_yes.addEventListener('click', function () {
@@ -175,14 +209,32 @@ export const cityDetector_func = () => {
     });
 
     elements_navHomeLinks.forEach((navHomeLink) => {
-      navHomeLink.addEventListener('click', function () {
-        if (element_detectedCity) {
-          const cityLink = element_detectedCity.getAttribute('href');
-          window.location.href = cityLink;
+      navHomeLink.addEventListener('click', function (event) {
+        event.preventDefault(); // Останавливаем стандартный переход, чтобы задать нужный URL вручную
+
+        // Получаем город из localStorage или URL
+        let detectedCity = localStorage.getItem('savedCity');
+        console.log('Detected city from localStorage:', detectedCity);
+
+        if (!detectedCity) {
+          detectedCity = getCityFromUrl();
+          console.log('No savedCity found, fallback to URL-detected city:', detectedCity);
+        }
+
+        if (detectedCity) {
+          // Обновляем href для перехода на страницу с текущим городом
+          const originalHref = navHomeLink.getAttribute('href');
+          const updatedHref = originalHref.replace(
+            /-(new-york|los-angeles|chicago|houston)$/i,
+            `-${detectedCity}`
+          );
+          console.log('Original href:', originalHref);
+          console.log('Updated href with detected city:', updatedHref);
+          window.location.href = updatedHref;
         } else {
-          setDefaultCity();
-          const cityLink = element_detectedCity.getAttribute('href');
-          window.location.href = cityLink;
+          console.warn('City not detected in localStorage or URL. Using default href.');
+          // Если город не определён, переходим по оригинальной ссылке
+          window.location.href = navHomeLink.getAttribute('href');
         }
       });
     });
