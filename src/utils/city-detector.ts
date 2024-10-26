@@ -47,8 +47,10 @@ export const cityDetector_func = () => {
         }
       } else {
         try {
-          const response = await fetch('https://ipinfo.io/json?token=f312629f0e4ed4');
+          const response = await fetch('https://get.geojs.io/v1/ip/geo.json');
           const data = await response.json();
+
+          console.log(data);
 
           const { city: respCity } = data;
           if (respCity) {
