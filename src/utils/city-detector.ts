@@ -1,254 +1,126 @@
 export const cityDetector_func = () => {
-  // Вставляем функции для извлечения города из URL и обновления ссылок
+  const defaultCity = 'New York';
+  const savedCity = localStorage.getItem('savedCity');
+
+  // Получаем город из URL
   function getCityFromCurrentUrl() {
     const urlPath = window.location.pathname;
     const cityMatch = urlPath.match(/-(new-york|los-angeles|chicago|houston)$/i);
     return cityMatch ? cityMatch[1].toLowerCase() : null;
   }
 
-  function updateLinksForCurrentCity() {
-    const currentCity = getCityFromCurrentUrl();
+  function updateLinksForCurrentCity(city) {
+    const linksToUpdate = document.querySelectorAll('[exp-city-dropdown-city-slug]');
+    linksToUpdate.forEach((link) => {
+      const linkCity = link.getAttribute('exp-city-dropdown-city-slug');
+      const baseHref = link.getAttribute('href');
+      if (linkCity !== city && baseHref) {
+        link.setAttribute(
+          'href',
+          baseHref.replace(/-(new-york|los-angeles|chicago|houston)$/i, `-${city}`)
+        );
+      }
+    });
+  }
 
-    if (currentCity) {
-      // Находим все ссылки, которые нужно обновить
-      const linksToUpdate = document.querySelectorAll('[exp-city-dropdown-city-slug]');
+  function setDefaultCity() {
+    const defaultButton = Array.from(document.querySelectorAll('[location-dropdown_button]')).find(
+      (button) => button.textContent.toUpperCase() === defaultCity.toUpperCase()
+    );
+    updateCityPlaceholders(defaultButton);
+  }
 
-      linksToUpdate.forEach((link) => {
-        const linkCity = link.getAttribute('exp-city-dropdown-city-slug');
-        const baseHref = link.getAttribute('href');
+  async function func_locationApi() {
+    try {
+      const response = await fetch('https://get.geojs.io/v1/ip/geo.json');
+      const data = await response.json();
+      const { city: apiCity } = data;
 
-        if (linkCity !== currentCity) {
-          link.setAttribute(
-            'href',
-            baseHref.replace(/-(new-york|los-angeles|chicago|houston)$/i, `-${currentCity}`)
-          );
-        }
-      });
+      if (apiCity) {
+        findAndUpdateCity(apiCity);
+      } else {
+        setDefaultCity();
+      }
+    } catch (error) {
+      setDefaultCity();
     }
   }
 
-  updateLinksForCurrentCity();
-
-  const elements_cityDropdown = document.querySelectorAll('[location-dropdown]');
-  const elements_navHomeLinks = document.querySelectorAll('[nav-home-link]');
-  const elements_homePageCityLinks = document.querySelectorAll('[home-page-city-links]');
-
-  if (elements_cityDropdown.length) {
-    const defaultCity = 'New York';
-    const all_cityButtons = document.querySelectorAll(
-      '[section_menu] [location-dropdown_button], [location-dropdown_list] [location-dropdown_button]'
+  function findAndUpdateCity(cityName) {
+    const matchedButton = Array.from(document.querySelectorAll('[location-dropdown_button]')).find(
+      (button) => button.textContent.toUpperCase() === cityName.toUpperCase()
     );
-    const button_yes = document.querySelector('[is-your-city-new-york="yes"]');
-    const button_no = document.querySelector('[is-your-city-new-york="no"]');
-    const button_ok = document.querySelector('[is-your-city-new-york="ok"]');
-    const button_close = document.querySelector('[city-detector-tip-close]');
-    const el_cityPopup = document.querySelector('[city-detector-tip]');
-    const el_cityName = document.querySelector('[city-guess]');
-    const el_cityQuestion = document.querySelector('[city-question]');
-    const el_locationDropdownList = document.querySelector('[location-dropdown_list]');
-    let element_detectedCity;
 
-    function getCityFromUrl() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get('testCity');
+    if (matchedButton) {
+      updateCityPlaceholders(matchedButton);
+    } else {
+      setDefaultCity();
     }
+  }
 
-    async function func_locationApi() {
-      const cityFromUrl = getCityFromUrl();
-      let city;
+  function updateCityPlaceholders(cityButton) {
+    if (!cityButton) return;
 
-      if (cityFromUrl) {
-        city = cityFromUrl;
-
-        if (city) {
-          let cityMatched = false;
-          all_cityButtons.forEach((cityButton) => {
-            if (cityButton.textContent.toUpperCase() === city.toUpperCase()) {
-              element_detectedCity = cityButton;
-              cityMatched = true;
-              cityGuess();
-            }
-          });
-          if (!cityMatched) {
-            setDefaultCity();
-          }
-        } else {
-          setDefaultCity();
-        }
-      } else {
-        try {
-          const response = await fetch('https://get.geojs.io/v1/ip/geo.json');
-          const data = await response.json();
-
-          const { city: respCity } = data;
-          if (respCity) {
-            let cityMatched = false;
-            all_cityButtons.forEach((cityButton) => {
-              if (cityButton.textContent.toUpperCase() === city.toUpperCase()) {
-                element_detectedCity = cityButton;
-                cityMatched = true;
-                cityGuess();
-              }
-            });
-            if (!cityMatched) {
-              setDefaultCity();
-              saveCity(respCity);
-            }
-          } else {
-            setDefaultCity();
-          }
-        } catch (error) {
-          setDefaultCity();
-        }
-      }
-    }
-
-    function setDefaultCity() {
-      let defaultCitySet = false;
-      all_cityButtons.forEach((cityButton) => {
-        if (cityButton.textContent.toUpperCase() === defaultCity.toUpperCase()) {
-          element_detectedCity = cityButton;
-          defaultCitySet = true;
-          cityGuess();
-        }
-      });
-    }
-
-    function getCityFromUrl() {
-      const urlPath = window.location.pathname;
-      const cityMatch = urlPath.match(/-(new-york|los-angeles|chicago|houston)$/i);
-      return cityMatch ? cityMatch[1].toLowerCase() : null;
-    }
-
-    button_yes.addEventListener('click', function () {
-      saveCity(element_detectedCity);
+    const cityName = cityButton.textContent;
+    document.querySelectorAll('[city-dropdown-name-placeholder]').forEach((placeholder) => {
+      placeholder.textContent = cityName;
+      placeholder.classList.remove('opacity-0');
     });
-
-    button_no.addEventListener('click', function () {
-      el_cityPopup.classList.add('hide');
-      el_locationDropdownList.classList.add('w--open');
+    document.querySelectorAll('[location-dropdown]').forEach((dropdown) => {
+      dropdown.classList.remove('opacity-0');
     });
+    document.querySelector('[city-detector-tip]').classList.add('hide');
+    document.querySelector('[city-guess]').textContent = cityName;
+  }
 
-    button_close.addEventListener('click', function () {
-      el_cityPopup.classList.add('hide');
-    });
-
-    function cityGuess() {
-      el_cityName.textContent = element_detectedCity.textContent;
-      el_cityName.classList.remove('opacity-0');
-      el_cityPopup.classList.remove('hide');
-      elements_cityDropdown.forEach((element) => {
-        element.classList.remove('opacity-0');
-      });
-      const allCityPlaceholders = document.querySelectorAll('[city-dropdown-name-placeholder]');
-      allCityPlaceholders.forEach((placeholder) => {
-        placeholder.classList.remove('opacity-0');
-      });
-    }
-
-    function saveCity(city) {
-      const currentCity =
-        city.getAttribute('location-dropdown_button') || city.getAttribute('home-page-city-links');
-      const currentCityLink = city.getAttribute('href');
-
-      localStorage.setItem('savedCity', currentCity);
-      updateCityPlaceholders(city);
-      el_cityPopup.classList.add('hide');
-      window.location.href = currentCityLink;
-    }
-
-    function updateCityPlaceholders(city) {
-      const cityName =
-        city.getAttribute('location-dropdown_button') || city.getAttribute('home-page-city-links');
-      const allCityPlaceholders = document.querySelectorAll('[city-dropdown-name-placeholder]');
-      allCityPlaceholders.forEach((placeholder) => {
-        placeholder.textContent = cityName;
-        placeholder.classList.remove('opacity-0');
-      });
-      elements_cityDropdown.forEach((element) => {
-        element.classList.remove('opacity-0');
-      });
-    }
-
-    function findElementOfCurrentCity(textNameOfCity) {
-      let cityFound = false;
-      all_cityButtons.forEach((cityButton) => {
-        if (
-          cityButton.getAttribute('location-dropdown_button').toUpperCase() ===
-          textNameOfCity.toUpperCase()
-        ) {
-          const currentCityButton = cityButton;
-          element_detectedCity = currentCityButton;
-          updateCityPlaceholders(currentCityButton);
-          cityFound = true;
-        }
-      });
-      if (!cityFound) {
-        setDefaultCity();
-      }
-    }
-
-    if (localStorage.getItem('savedCity')) {
-      const savedCity = localStorage.getItem('savedCity');
-      findElementOfCurrentCity(savedCity);
-      elements_cityDropdown.forEach((element) => {
-        element.classList.remove('opacity-0');
-      });
+  // Основная логика определения города
+  if (savedCity) {
+    findAndUpdateCity(savedCity);
+  } else {
+    const urlCity = getCityFromCurrentUrl();
+    if (urlCity) {
+      findAndUpdateCity(urlCity);
     } else {
       func_locationApi();
     }
-
-    all_cityButtons.forEach((cityButton) => {
-      cityButton.addEventListener('click', function () {
-        saveCity(cityButton);
-        updateCityPlaceholders(cityButton);
-        elements_cityDropdown.forEach((element) => {
-          element.classList.remove('opacity-0');
-        });
-      });
-    });
-
-    elements_navHomeLinks.forEach((navHomeLink) => {
-      navHomeLink.addEventListener('click', function () {
-        if (element_detectedCity) {
-          const cityLink = element_detectedCity.getAttribute('href');
-          window.location.href = cityLink;
-        } else {
-          setDefaultCity();
-          const cityLink = element_detectedCity.getAttribute('href');
-          window.location.href = cityLink;
-        }
-      });
-    });
-
-    elements_homePageCityLinks.forEach((cityLink) => {
-      cityLink.addEventListener('click', function (event) {
-        event.preventDefault(); // Останавливаем стандартное поведение ссылки
-        saveCity(cityLink); // Сохраняем город
-      });
-    });
   }
 
-  // Новый функционал для работы с parallel-page-type
-  const bodyElement = document.querySelector('body');
-  const pageType = bodyElement.getAttribute('parallel-page-type');
+  // Слушатели событий для кнопок и ссылок
+  const button_yes = document.querySelector('[is-your-city-new-york="yes"]');
+  const button_no = document.querySelector('[is-your-city-new-york="no"]');
+  const button_close = document.querySelector('[city-detector-tip-close]');
+  const elements_navHomeLinks = document.querySelectorAll('[nav-home-link]');
+  const elements_homePageCityLinks = document.querySelectorAll('[home-page-city-links]');
 
-  if (pageType === 'event' || pageType === 'individual') {
-    const parentElement = document.querySelector(`[parallel-page-links-parent="${pageType}"]`);
-    const linksWithExpCity = parentElement.querySelectorAll('[exp-city]');
-    const dropdownLinks = document.querySelectorAll(
-      '[parallel-location-dropdown_list] [location-dropdown_button]'
+  [button_yes, button_no, button_close].forEach((btn) => {
+    btn?.addEventListener('click', () =>
+      document.querySelector('[city-detector-tip]').classList.add('hide')
     );
+  });
 
-    linksWithExpCity.forEach((expLink) => {
-      const expCity = expLink.getAttribute('exp-city');
-      dropdownLinks.forEach((dropdownLink) => {
-        const locationCity = dropdownLink.getAttribute('location-dropdown_button');
-        if (expCity === locationCity) {
-          const newHref = expLink.getAttribute('href');
-          dropdownLink.setAttribute('href', newHref);
-        }
-      });
+  elements_navHomeLinks.forEach((navHomeLink) => {
+    navHomeLink.addEventListener('click', () => {
+      window.location.href = element_detectedCity?.getAttribute('href') || '#';
     });
+  });
+
+  elements_homePageCityLinks.forEach((cityLink) => {
+    cityLink.addEventListener('click', function () {
+      saveCity(cityLink);
+    });
+  });
+
+  function saveCity(cityButton) {
+    const cityName =
+      cityButton.getAttribute('location-dropdown_button') ||
+      cityButton.getAttribute('home-page-city-links');
+    const cityLink = cityButton.getAttribute('href');
+
+    if (cityName) {
+      localStorage.setItem('savedCity', cityName);
+      updateCityPlaceholders(cityButton);
+      document.querySelector('[city-detector-tip]').classList.add('hide');
+      window.location.href = cityLink;
+    }
   }
 };
