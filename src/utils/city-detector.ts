@@ -32,7 +32,7 @@ export const cityDetector_func = () => {
 
   async function func_locationApi() {
     try {
-      const response = await fetch('https://get.geojs.io/v1/ip/geo.json');
+      const response = await fetch('https://ipinfo.io?token=e244e6770c04f8');
       const data = await response.json();
       const { city: apiCity } = data;
 
