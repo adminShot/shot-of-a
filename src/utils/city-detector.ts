@@ -71,6 +71,9 @@ export const cityDetector_func = () => {
     });
     document.querySelector('[city-detector-tip]').classList.add('hide');
     document.querySelector('[city-guess]').textContent = cityName;
+
+    // Вызов для обновления ссылок с текущим городом
+    // updateLinksForCurrentCity(cityName);
   }
 
   // Основная логика определения города
@@ -107,6 +110,14 @@ export const cityDetector_func = () => {
   elements_homePageCityLinks.forEach((cityLink) => {
     cityLink.addEventListener('click', function () {
       saveCity(cityLink);
+    });
+  });
+
+  const locationDropdownButtons = document.querySelectorAll('[location-dropdown_button]');
+
+  locationDropdownButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      saveCity(button);
     });
   });
 
