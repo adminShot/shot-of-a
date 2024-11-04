@@ -1,5 +1,5 @@
 export const cityDetector_func = () => {
-  const defaultCity = 'New york';
+  const defaultCity = 'new york';
   const savedCity = localStorage.getItem('savedCity')
     ? localStorage.getItem('savedCity').replace('-', ' ')
     : null;
