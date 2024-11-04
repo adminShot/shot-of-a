@@ -2,12 +2,12 @@ export const expSelector_func = () => {
   const expSelector_el = document.querySelectorAll('[this-is-a-city-page]');
 
   if (expSelector_el.length) {
-    let detectedCity = localStorage.getItem('savedCity'); // Сначала проверяем LocalStorage
+    let detectedCity = localStorage.getItem('savedCity');
 
     if (!detectedCity) {
       // Если города нет в LocalStorage, определяем по URL
       const urlPath = window.location.pathname.toLowerCase();
-      const cityMatch = urlPath.match(/-(new-york|los-angeles|chicago|houston|san-francisco)$/i);
+      const cityMatch = urlPath.match(/(?:\/city\/|\/|-)(new-york|los-angeles|chicago|houston)$/i);
       detectedCity = cityMatch ? cityMatch[1].toLowerCase() : null;
     }
 

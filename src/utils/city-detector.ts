@@ -1,33 +1,21 @@
 export const cityDetector_func = () => {
-  const defaultCity = 'New York';
-  const savedCity = localStorage.getItem('savedCity');
+  const defaultCity = 'New york';
+  const savedCity = localStorage.getItem('savedCity')
+    ? localStorage.getItem('savedCity').replace('-', ' ')
+    : null;
 
   // Получаем город из URL
   function getCityFromCurrentUrl() {
     const urlPath = window.location.pathname;
-    const cityMatch = urlPath.match(/-(new-york|los-angeles|chicago|houston)$/i);
-    return cityMatch ? cityMatch[1].toLowerCase() : null;
-  }
-
-  function updateLinksForCurrentCity(city) {
-    const linksToUpdate = document.querySelectorAll('[exp-city-dropdown-city-slug]');
-    linksToUpdate.forEach((link) => {
-      const linkCity = link.getAttribute('exp-city-dropdown-city-slug');
-      const baseHref = link.getAttribute('href');
-      if (linkCity !== city && baseHref) {
-        link.setAttribute(
-          'href',
-          baseHref.replace(/-(new-york|los-angeles|chicago|houston)$/i, `-${city}`)
-        );
-      }
-    });
+    const cityMatch = urlPath.match(/(?:\/city\/|\/|-)(new-york|los-angeles|chicago|houston)$/i);
+    return cityMatch ? cityMatch[1].toLowerCase().replace('-', ' ') : null;
   }
 
   function setDefaultCity() {
     const defaultButton = Array.from(document.querySelectorAll('[location-dropdown_button]')).find(
       (button) => button.textContent.toUpperCase() === defaultCity.toUpperCase()
     );
-    updateCityPlaceholders(defaultButton);
+    updateCityPlaceholders(defaultButton, defaultCity);
   }
 
   async function func_locationApi() {
@@ -36,9 +24,23 @@ export const cityDetector_func = () => {
       const data = await response.json();
       const { city: apiCity } = data;
 
-      if (apiCity) {
-        findAndUpdateCity(apiCity);
+      // Проверяем наличие savedCity
+      if (savedCity) {
+        findAndUpdateCity(savedCity);
+        return;
+      }
+
+      const availableCities = ['new york', 'los angeles', 'chicago', 'houston'];
+      const matchedCity = availableCities.find(
+        (city) => city.toLowerCase() === apiCity.toLowerCase()
+      );
+
+      if (matchedCity) {
+        // Если город найден, показываем его в [city-guess]
+        findAndUpdateCity(matchedCity);
+        document.querySelector('[city-guess]').textContent = matchedCity;
       } else {
+        // Если город не найден в доступных, показываем город по умолчанию
         setDefaultCity();
       }
     } catch (error) {
@@ -52,16 +54,15 @@ export const cityDetector_func = () => {
     );
 
     if (matchedButton) {
-      updateCityPlaceholders(matchedButton);
+      updateCityPlaceholders(matchedButton, cityName);
     } else {
       setDefaultCity();
     }
   }
 
-  function updateCityPlaceholders(cityButton) {
+  function updateCityPlaceholders(cityButton, cityName) {
     if (!cityButton) return;
 
-    const cityName = cityButton.textContent;
     document.querySelectorAll('[city-dropdown-name-placeholder]').forEach((placeholder) => {
       placeholder.textContent = cityName;
       placeholder.classList.remove('opacity-0');
@@ -69,11 +70,6 @@ export const cityDetector_func = () => {
     document.querySelectorAll('[location-dropdown]').forEach((dropdown) => {
       dropdown.classList.remove('opacity-0');
     });
-    document.querySelector('[city-detector-tip]').classList.add('hide');
-    document.querySelector('[city-guess]').textContent = cityName;
-
-    // Вызов для обновления ссылок с текущим городом
-    // updateLinksForCurrentCity(cityName);
   }
 
   // Основная логика определения города
@@ -81,6 +77,8 @@ export const cityDetector_func = () => {
     findAndUpdateCity(savedCity);
   } else {
     const urlCity = getCityFromCurrentUrl();
+    document.querySelector('[city-detector-tip]')?.classList.remove('hide');
+    document.querySelector('[city-guess]').textContent = defaultCity;
     if (urlCity) {
       findAndUpdateCity(urlCity);
     } else {
@@ -88,7 +86,6 @@ export const cityDetector_func = () => {
     }
   }
 
-  // Слушатели событий для кнопок и ссылок
   const button_yes = document.querySelector('[is-your-city-new-york="yes"]');
   const button_no = document.querySelector('[is-your-city-new-york="no"]');
   const button_close = document.querySelector('[city-detector-tip-close]');
@@ -101,9 +98,42 @@ export const cityDetector_func = () => {
     );
   });
 
+  button_yes?.addEventListener('click', () => {
+    const currentCity = document
+      .querySelector('[city-guess]')
+      .textContent.toLowerCase()
+      .replace(' ', '-');
+    localStorage.setItem('savedCity', currentCity);
+
+    findAndUpdateCity(currentCity);
+
+    window.location.href = '/city/' + currentCity;
+  });
+
+  button_no?.addEventListener('click', () => {
+    document.querySelector('[location-dropdown_list')?.classList.add('w--open');
+  });
+
   elements_navHomeLinks.forEach((navHomeLink) => {
-    navHomeLink.addEventListener('click', () => {
-      window.location.href = element_detectedCity?.getAttribute('href') || '#';
+    navHomeLink.addEventListener('click', (event) => {
+      event.preventDefault(); // Отменяем стандартный переход по ссылке
+
+      // Определяем, находимся ли мы на странице с привязкой к городу
+      const cityPattern = /(?:\/city\/|\/|-)(new-york|los-angeles|chicago|houston)$/i;
+      const currentPath = window.location.pathname;
+      const cityMatch = currentPath.match(cityPattern);
+
+      // Проверяем, есть ли сохранённый город
+      const detectedCity = savedCity || defaultCity;
+
+      if (cityMatch) {
+        // Если текущий URL соответствует шаблону города, переходим на /city/город
+        window.location.href = `/city/${detectedCity.replace(' ', '-')}`;
+      } else {
+        // Иначе переходим по стандартной ссылке
+        const cityHref = navHomeLink.getAttribute('href');
+        window.location.href = cityHref || '#';
+      }
     });
   });
 
@@ -122,15 +152,12 @@ export const cityDetector_func = () => {
   });
 
   function saveCity(cityButton) {
-    const cityName =
-      cityButton.getAttribute('location-dropdown_button') ||
-      cityButton.getAttribute('home-page-city-links');
+    const cityName = cityButton.getAttribute('location-dropdown_button');
     const cityLink = cityButton.getAttribute('href');
 
     if (cityName) {
       localStorage.setItem('savedCity', cityName);
-      updateCityPlaceholders(cityButton);
-      document.querySelector('[city-detector-tip]').classList.add('hide');
+      updateCityPlaceholders(cityButton, cityName);
       window.location.href = cityLink;
     }
   }
