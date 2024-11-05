@@ -146,7 +146,8 @@ export const cityDetector_func = () => {
   const locationDropdownButtons = document.querySelectorAll('[location-dropdown_button]');
 
   locationDropdownButtons.forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
       saveCity(button);
     });
   });
@@ -155,12 +156,49 @@ export const cityDetector_func = () => {
     const cityName =
       cityButton.getAttribute('location-dropdown_button') ||
       cityButton.getAttribute('home-page-city-links');
-    const cityLink = cityButton.getAttribute('href');
+
+    // Текущий путь и якорь
+    const currentPath = window.location.pathname;
+    const currentHash = window.location.hash; // сохраняем якорь
+
+    console.log('City Name:', cityName);
+    console.log('Current Path:', currentPath);
+    console.log('Current Hash:', currentHash);
 
     if (cityName) {
       sessionStorage.setItem('savedCity', cityName);
+      console.log('Saved City:', sessionStorage.getItem('savedCity'));
+
+      // Определение, является ли страница "экспириенсом" или "эвентом"
+      const isExperiencePage = /individual-art-experiences-/i.test(currentPath);
+      const isEventPage = /events-/i.test(currentPath);
+      console.log('Is Experience Page:', isExperiencePage);
+      console.log('Is Event Page:', isEventPage);
+
+      // Проверка текущего города в URL и создание newUrl только при необходимости
+      let newUrl = currentPath;
+      const currentCityPattern = /-(new-york|los-angeles|chicago|houston)$/i;
+      const match = currentPath.match(currentCityPattern);
+
+      if (match && match[1].toLowerCase().replace('-', ' ') !== cityName.toLowerCase()) {
+        // Меняем только город в URL, если он отличается
+        newUrl = currentPath.replace(currentCityPattern, `-${cityName.replace(' ', '-')}`);
+      } else if (!match && !(isExperiencePage || isEventPage)) {
+        // Если текущий URL не содержит город и это не страницы экспириенсов/эвентов
+        newUrl = `/city/${cityName.replace(' ', '-')}`;
+      }
+
+      console.log('New URL:', newUrl);
+
+      // Обновляем город и переходим по соответствующему URL, если он отличается от текущего
       updateCityPlaceholders(cityButton, cityName);
-      window.location.href = cityLink;
+
+      // Добавляем currentHash к newUrl перед редиректом
+      if (`${newUrl}${currentHash}` !== window.location.href) {
+        window.location.href = `${newUrl}${currentHash}`;
+      }
+    } else {
+      console.warn('City name not found on the button.');
     }
   }
 };
