@@ -2,7 +2,7 @@ export const expSelector_func = () => {
   const expSelector_el = document.querySelectorAll('[this-is-a-city-page]');
 
   if (expSelector_el.length) {
-    let detectedCity = localStorage.getItem('savedCity');
+    let detectedCity = sessionStorage.getItem('savedCity');
 
     if (!detectedCity) {
       // Если города нет в LocalStorage, определяем по URL

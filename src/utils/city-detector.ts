@@ -1,7 +1,7 @@
 export const cityDetector_func = () => {
   const defaultCity = 'new york';
-  const savedCity = localStorage.getItem('savedCity')
-    ? localStorage.getItem('savedCity').replace('-', ' ')
+  const savedCity = sessionStorage.getItem('savedCity')
+    ? sessionStorage.getItem('savedCity').replace('-', ' ')
     : null;
 
   // Получаем город из URL
@@ -103,7 +103,7 @@ export const cityDetector_func = () => {
       .querySelector('[city-guess]')
       .textContent.toLowerCase()
       .replace(' ', '-');
-    localStorage.setItem('savedCity', currentCity);
+    sessionStorage.setItem('savedCity', currentCity);
 
     findAndUpdateCity(currentCity);
 
@@ -158,7 +158,7 @@ export const cityDetector_func = () => {
     const cityLink = cityButton.getAttribute('href');
 
     if (cityName) {
-      localStorage.setItem('savedCity', cityName);
+      sessionStorage.setItem('savedCity', cityName);
       updateCityPlaceholders(cityButton, cityName);
       window.location.href = cityLink;
     }
