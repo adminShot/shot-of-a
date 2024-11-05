@@ -152,7 +152,9 @@ export const cityDetector_func = () => {
   });
 
   function saveCity(cityButton) {
-    const cityName = cityButton.getAttribute('location-dropdown_button');
+    const cityName =
+      cityButton.getAttribute('location-dropdown_button') ||
+      cityButton.getAttribute('home-page-city-links');
     const cityLink = cityButton.getAttribute('href');
 
     if (cityName) {
