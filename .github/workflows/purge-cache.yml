@@ -1,0 +1,16 @@
+name: Purge jsDelivr Cache
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  purge-jsdelivr-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: gacts/purge-jsdelivr-cache@v1
+        with:
+          url: |
+            https://cdn.jsdelivr.net/gh/arbass/shot-of-a@my-feature-branch/dist/index.js
