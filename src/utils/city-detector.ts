@@ -161,19 +161,13 @@ export const cityDetector_func = () => {
     const currentPath = window.location.pathname;
     const currentHash = window.location.hash; // сохраняем якорь
 
-    console.log('City Name:', cityName);
-    console.log('Current Path:', currentPath);
-    console.log('Current Hash:', currentHash);
-
     if (cityName) {
       sessionStorage.setItem('savedCity', cityName);
-      console.log('Saved City:', sessionStorage.getItem('savedCity'));
 
       // Определение, является ли страница "экспириенсом" или "эвентом"
       const isExperiencePage = /individual-art-experiences-/i.test(currentPath);
       const isEventPage = /events-/i.test(currentPath);
-      console.log('Is Experience Page:', isExperiencePage);
-      console.log('Is Event Page:', isEventPage);
+      const isDatesPage = /dates-night-/i.test(currentPath);
 
       // Проверка текущего города в URL и создание newUrl только при необходимости
       let newUrl = currentPath;
@@ -183,12 +177,10 @@ export const cityDetector_func = () => {
       if (match && match[1].toLowerCase().replace('-', ' ') !== cityName.toLowerCase()) {
         // Меняем только город в URL, если он отличается
         newUrl = currentPath.replace(currentCityPattern, `-${cityName.replace(' ', '-')}`);
-      } else if (!match && !(isExperiencePage || isEventPage)) {
+      } else if (!match && !(isExperiencePage || isEventPage || isDatesPage)) {
         // Если текущий URL не содержит город и это не страницы экспириенсов/эвентов
         newUrl = `/city/${cityName.replace(' ', '-')}`;
       }
-
-      console.log('New URL:', newUrl);
 
       // Обновляем город и переходим по соответствующему URL, если он отличается от текущего
       updateCityPlaceholders(cityButton, cityName);
