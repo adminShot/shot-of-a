@@ -6,9 +6,7 @@ export const bookLinks_func = () => {
       const linkFromAtribute = elButton.getAttribute('book-now-button');
 
       if (linkFromAtribute != '') {
-        const currentCity = document
-          .querySelector('[catalog-page-city]')
-          .getAttribute('catalog-page-city');
+        const currentCity = document.body.getAttribute('this-is-a-city-page');
         const atribute_linksItemsList_readyFalse = linkFromAtribute
           .split(';')
           .filter((item) => item.trim() !== '');
