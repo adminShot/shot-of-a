@@ -44,18 +44,23 @@ export const bookLinks_func = () => {
           console.log('Часть вторая (цена):', price_value);
 
           if (price_city === currentCity) {
-            // Поднимаемся к родительскому элементу
-            const { parentElement } = elButton;
-            if (parentElement) {
-              const priceTextElement = parentElement.querySelector('[data-price-text]');
-              if (priceTextElement) {
-                priceTextElement.innerText = price_value; // Обновляем текст элемента цены
-                console.log('Установлена цена:', price_value, 'для элемента:', priceTextElement);
-              } else {
-                console.warn('Элемент с data-price-text не найден в родительском элементе');
-              }
+            elButton.setAttribute('data-price', price_value); // Устанавливаем data-атрибут для цены
+
+            // Ищем родительский элемент с data-price-text и обновляем его текст
+            const parentWithPriceText = elButton
+              .closest('.exp-slider_title-wrapper')
+              .querySelector('[data-price-text]');
+            if (parentWithPriceText) {
+              parentWithPriceText.setAttribute('data-price-text', price_value); // Устанавливаем значение атрибута
+              parentWithPriceText.innerText = price_value; // Обновляем текст внутри
+              console.log(
+                'Установлена цена:',
+                price_value,
+                'в родительском блоке:',
+                parentWithPriceText
+              );
             } else {
-              console.warn('Родительский элемент для кнопки не найден');
+              console.log('Родительский элемент с data-price-text не найден');
             }
           }
         });
