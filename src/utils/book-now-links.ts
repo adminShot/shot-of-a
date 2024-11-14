@@ -5,6 +5,7 @@ export const bookLinks_func = () => {
   if (bookLinks_el.length) {
     bookLinks_el.forEach((elButton) => {
       const linkFromAtribute = elButton.getAttribute('book-now-button');
+      const priceFromAttribute = elButton.getAttribute('price-info');
       console.log('Атрибут book-now-button:', linkFromAtribute);
 
       if (linkFromAtribute != '') {
@@ -15,6 +16,11 @@ export const bookLinks_func = () => {
           .split(';')
           .filter((item) => item.trim() !== '');
         console.log('Список необработанных ссылок:', atribute_linksItemsList_readyFalse);
+
+        const priceItemsList_readyFalse = priceFromAttribute
+          .split(';')
+          .filter((item) => item.trim() !== '');
+        console.log('Список необработанных цен:', priceItemsList_readyFalse);
 
         const atribute_linksItemsList_readyTrue = [];
         atribute_linksItemsList_readyFalse.forEach((el) => {
@@ -29,6 +35,28 @@ export const bookLinks_func = () => {
             elButton.setAttribute('href', part_second);
             elButton.classList.remove('hide');
             console.log('Установлен href:', part_second, 'для кнопки:', elButton);
+          }
+        });
+
+        priceItemsList_readyFalse.forEach((priceEl) => {
+          const [price_city, price_value] = priceEl.split('@');
+          console.log('Часть первая (город):', price_city);
+          console.log('Часть вторая (цена):', price_value);
+
+          if (price_city === currentCity) {
+            // Поднимаемся к родительскому элементу
+            const { parentElement } = elButton;
+            if (parentElement) {
+              const priceTextElement = parentElement.querySelector('[data-price-text]');
+              if (priceTextElement) {
+                priceTextElement.innerText = price_value; // Обновляем текст элемента цены
+                console.log('Установлена цена:', price_value, 'для элемента:', priceTextElement);
+              } else {
+                console.warn('Элемент с data-price-text не найден в родительском элементе');
+              }
+            } else {
+              console.warn('Родительский элемент для кнопки не найден');
+            }
           }
         });
       }
