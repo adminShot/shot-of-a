@@ -11,7 +11,7 @@ export const countryInput_func = () => {
   const countryInputs = document.querySelectorAll('[data-country]');
 
   countryInputs.forEach((countryElement) => {
-    countryElement.addEventListener('input', () => {
+    const handleCountryChange = () => {
       const stateInput = document.querySelector(`[data-state="${countryElement.dataset.country}"]`);
       const stateDropdown = document.querySelector(
         `[data-state-dropdown="${countryElement.dataset.country}"]`
@@ -30,6 +30,10 @@ export const countryInput_func = () => {
         stateDropdown.style.display = 'block';
         stateInput.required = true;
       }
-    });
+    };
+
+    // Привязываем обработчик к событиям input и change
+    countryElement.addEventListener('input', handleCountryChange);
+    countryElement.addEventListener('change', handleCountryChange);
   });
 };
