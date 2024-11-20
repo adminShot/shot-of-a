@@ -6,6 +6,7 @@ export const countryInput_func = () => {
     'united states of america',
     'United States',
     'united states',
+    'UNITED STATES',
   ];
 
   const countryInputs = document.querySelectorAll('[data-country]');
@@ -31,6 +32,8 @@ export const countryInput_func = () => {
         stateInput.required = true;
       }
     };
+
+    handleCountryChange();
 
     // Привязываем обработчик к событиям input и change
     countryElement.addEventListener('input', handleCountryChange);
