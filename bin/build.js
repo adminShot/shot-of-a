@@ -46,7 +46,7 @@ const context = await esbuild.context({
 if (PRODUCTION) {
   const result = await context.rebuild();
   const builtFiles = Object.keys(result.metafile.outputs).filter((file) => !file.endsWith('.map'));
-  console.log('Build files:', builtFiles);
+  console.log(builtFiles[0]);
   context.dispose();
 }
 
