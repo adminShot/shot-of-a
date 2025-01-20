@@ -3,7 +3,7 @@ import { readdirSync, rmSync } from 'fs';
 import { join, sep } from 'path';
 
 // Config output
-const BUILD_DIRECTORY = 'dist';
+const BUILD_DIRECTORY = 'dist/assets';
 const PRODUCTION = process.env.NODE_ENV === 'production';
 
 // Config entrypoint files
