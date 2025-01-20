@@ -1,5 +1,5 @@
 import * as esbuild from 'esbuild';
-import { readdirSync } from 'fs';
+import { readdirSync, rmSync } from 'fs';
 import { join, sep } from 'path';
 
 // Config output
@@ -15,17 +15,30 @@ const SERVE_PORT = 3000;
 const SERVE_ORIGIN = `http://localhost:${SERVE_PORT}`;
 
 // Create context
-const context = await esbuild.context({
-  bundle: true,
+const baseConfig = {
   entryPoints: ENTRY_POINTS,
   outdir: BUILD_DIRECTORY,
+  bundle: true,
   minify: PRODUCTION,
   sourcemap: !PRODUCTION,
   target: PRODUCTION ? 'es2020' : 'esnext',
-  inject: LIVE_RELOAD ? ['./bin/live-reload.js'] : undefined,
   define: {
     SERVE_ORIGIN: JSON.stringify(SERVE_ORIGIN),
   },
+};
+
+const prodConfig = {
+  entryNames: '[name]-[hash]',
+  chunkNames: '[name]-[hash]',
+  assetNames: '[name]-[hash]',
+};
+
+rmSync(BUILD_DIRECTORY, { recursive: true, force: true });
+
+const context = await esbuild.context({
+  ...baseConfig,
+  ...(PRODUCTION ? prodConfig : {}),
+  inject: LIVE_RELOAD ? ['./bin/live-reload.js'] : undefined,
 });
 
 // Build files in prod
