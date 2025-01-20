@@ -1,6 +1,7 @@
+import { log } from 'console';
 import * as esbuild from 'esbuild';
 import { readdirSync, rmSync } from 'fs';
-import path, { join, sep } from 'path';
+import { join, sep } from 'path';
 
 // Config output
 const BUILD_DIRECTORY = 'dist/assets';
@@ -48,11 +49,7 @@ if (PRODUCTION) {
   const mainFile = Object.keys(result.metafile.outputs).find(
     (file) => file.endsWith('.js') && !file.endsWith('.map')
   );
-
-  if (mainFile) {
-    const fileName = path.basename(mainFile); // выдает только имя файла с хешем
-    console.log(fileName);
-  }
+  log(mainFile);
   context.dispose();
 }
 
