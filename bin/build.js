@@ -1,6 +1,6 @@
 import * as esbuild from 'esbuild';
 import { readdirSync, rmSync } from 'fs';
-import { join, sep } from 'path';
+import path, { join, sep } from 'path';
 
 // Config output
 const BUILD_DIRECTORY = 'dist/assets';
@@ -45,8 +45,14 @@ const context = await esbuild.context({
 // Build files in prod
 if (PRODUCTION) {
   const result = await context.rebuild();
-  const builtFiles = Object.keys(result.metafile.outputs).filter((file) => !file.endsWith('.map'));
-  console.log(builtFiles[0]);
+  const mainFile = Object.keys(result.metafile.outputs).find(
+    (file) => file.endsWith('.js') && !file.endsWith('.map')
+  );
+
+  if (mainFile) {
+    const fileName = path.basename(mainFile); // выдает только имя файла с хешем
+    console.log(fileName);
+  }
   context.dispose();
 }
 
