@@ -38,12 +38,15 @@ rmSync(BUILD_DIRECTORY, { recursive: true, force: true });
 const context = await esbuild.context({
   ...baseConfig,
   ...(PRODUCTION ? prodConfig : {}),
+  metafile: true,
   inject: LIVE_RELOAD ? ['./bin/live-reload.js'] : undefined,
 });
 
 // Build files in prod
 if (PRODUCTION) {
-  await context.rebuild();
+  const result = await context.rebuild();
+  const builtFiles = Object.keys(result.metafile.outputs).filter((file) => !file.endsWith('.map'));
+  console.log('Build files:', builtFiles);
   context.dispose();
 }
 
