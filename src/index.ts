@@ -14,6 +14,7 @@ import { selectionAllButton_func } from '$utils/selection-all-button';
 import { coloredSlider_func } from '$utils/sliders-colors';
 window.Webflow ||= [];
 window.Webflow.push(() => {
+  console.log('2');
   cityDetector_func();
   formSelectors_func();
   expParams_func();
