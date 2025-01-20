@@ -61,6 +61,7 @@
     "pnpm": ">=9"
   },
   "config": {
+    "ghUserName": "arbass",
     "browser": "arc",
     "packageManager": "bun"
   }
