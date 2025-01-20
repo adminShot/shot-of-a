@@ -4,6 +4,7 @@ import { cityDetector_func } from '$utils/city-detector';
 import { contacts_redirect } from '$utils/contacts_redirect';
 import { countryInput_func } from '$utils/country-input';
 import { currentCity_input } from '$utils/currentCity_input';
+import { dates_redirect } from '$utils/dates_redirect';
 import { expParams_func } from '$utils/exp-catalog-params';
 import { expSelector_func } from '$utils/exp-selector';
 import { expSliderLinkCreator_func } from '$utils/exp-slider-link-creator';
@@ -40,4 +41,5 @@ window.Webflow.push(() => {
   currentCity_input();
   burger_btn();
   contacts_redirect();
+  dates_redirect();
 });
