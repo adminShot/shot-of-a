@@ -24,6 +24,8 @@ export const cityDetector_func = () => {
       const data = await response.json();
       const { city: apiCity } = data;
 
+      saveCityToSessionStorage(apiCity);
+
       // Проверяем наличие savedCity
       if (savedCity) {
         findAndUpdateCity(savedCity);
@@ -46,6 +48,11 @@ export const cityDetector_func = () => {
     } catch (error) {
       setDefaultCity();
     }
+  }
+
+  function saveCityToSessionStorage(city: string) {
+    if (sessionStorage.getItem('cityFromApi')) return;
+    sessionStorage.setItem('cityFromApi', city);
   }
 
   function findAndUpdateCity(cityName) {

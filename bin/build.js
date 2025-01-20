@@ -1,7 +1,7 @@
 import { log } from 'console';
 import * as esbuild from 'esbuild';
 import { readdirSync, rmSync } from 'fs';
-import { join, sep } from 'path';
+import { join, relative, sep } from 'path';
 
 // Config output
 const BUILD_DIRECTORY = 'dist/assets';
@@ -58,7 +58,7 @@ else {
   await context.watch();
   await context
     .serve({
-      servedir: BUILD_DIRECTORY,
+      servedir: process.cwd(),
       port: SERVE_PORT,
     })
     .then(logServedFiles);
@@ -68,33 +68,24 @@ else {
  * Logs information about the files that are being served during local development.
  */
 function logServedFiles() {
-  /**
-   * Recursively gets all files in a directory.
-   * @param {string} dirPath
-   * @returns {string[]} An array of file paths.
-   */
   const getFiles = (dirPath) => {
     const files = readdirSync(dirPath, { withFileTypes: true }).map((dirent) => {
-      const path = join(dirPath, dirent.name);
-      return dirent.isDirectory() ? getFiles(path) : path;
+      const filePath = join(dirPath, dirent.name);
+      return dirent.isDirectory() ? getFiles(filePath) : filePath;
     });
-
     return files.flat();
   };
 
   const files = getFiles(BUILD_DIRECTORY);
 
   const filesInfo = files
+    .filter((file) => !file.endsWith('.map'))
     .map((file) => {
-      if (file.endsWith('.map')) return;
+      // Получаем путь относительно папки servedir ('dist')
+      const relativePath = relative('dist', file).split(sep).join('/');
+      const location = `${SERVE_ORIGIN}/${relativePath}`;
 
-      // Normalize path and create file location
-      const paths = file.split(sep);
-      paths[0] = SERVE_ORIGIN;
-
-      const location = paths.join('/');
-
-      // Create import suggestion
+      // Импорт-сниппет
       const tag = location.endsWith('.css')
         ? `<link href="${location}" rel="stylesheet" type="text/css"/>`
         : `<script defer src="${location}"></script>`;
@@ -103,9 +94,7 @@ function logServedFiles() {
         'File Location': location,
         'Import Suggestion': tag,
       };
-    })
-    .filter(Boolean);
+    });
 
-  // eslint-disable-next-line no-console
   console.table(filesInfo);
 }
