@@ -26,7 +26,7 @@
     "dev": "cross-env NODE_ENV=development node ./bin/build.js",
     "build": "cross-env NODE_ENV=production node ./bin/build.js",
     "publish:dev": "concurrently --raw \"bun run dev\" \"wf-publish --env=dev --script-url=http://localhost:3000/dist/assets/index.js\"",
-    "publish:prod": "wf-publish --env=prod",
+    "publish:prod": "python3 /Users/macbookprom1/Documents/webflow-publish-plugin/main.py --env=prod --branch=my-feature-branch",
     "lint": "eslint --ignore-path .gitignore ./src && prettier --check ./src",
     "lint:fix": "eslint --ignore-path .gitignore ./src --fix",
     "check": "tsc --noEmit",
