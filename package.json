@@ -63,6 +63,7 @@
   "config": {
     "ghUserName": "arbass",
     "browser": "arc",
-    "packageManager": "bun"
+    "packageManager": "bun",
+    "repositoryName": "shot-of-a"
   }
 }
