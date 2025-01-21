@@ -7,8 +7,14 @@ export const expSelector_func = () => {
     if (!detectedCity) {
       // Если города нет в LocalStorage, определяем по URL
       const urlPath = window.location.pathname.toLowerCase();
-      const cityMatch = urlPath.match(/(?:\/city\/|\/|-)(new-york|los-angeles|chicago|houston)$/i);
+      const cityMatch = urlPath.match(
+        /(?:\/city\/|\/|-)(new-york|los-angeles|chicago|houston)(?=$|\/)/i
+      );
       detectedCity = cityMatch ? cityMatch[1].toLowerCase() : null;
+
+      if (cityMatch) {
+        sessionStorage.setItem('savedCity', cityMatch[1].toLowerCase());
+      }
     }
 
     expSelector_el.forEach((bodyElement) => {
