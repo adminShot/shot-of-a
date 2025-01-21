@@ -19,7 +19,6 @@ import { menuColor_func } from '$utils/menu-color';
 import { mobile_menu } from '$utils/mobile_menu';
 import { selectionAllButton_func } from '$utils/selection-all-button';
 import { coloredSlider_func } from '$utils/sliders-colors';
-import { testScript } from '$utils/testScript';
 window.Webflow ||= [];
 window.Webflow.push(() => {
   cityDetector_func();
@@ -43,5 +42,4 @@ window.Webflow.push(() => {
   burger_btn();
   contacts_redirect();
   dates();
-  testScript();
 });

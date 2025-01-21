@@ -40,7 +40,8 @@ export const cityDetector_func = () => {
       if (matchedCity) {
         // Если город найден, показываем его в [city-guess]
         findAndUpdateCity(matchedCity);
-        document.querySelector('[city-guess]').textContent = matchedCity;
+        const cityGuess = document.querySelector('[city-guess]');
+        if (cityGuess) cityGuess.textContent = matchedCity;
       } else {
         // Если город не найден в доступных, показываем город по умолчанию
         setDefaultCity();
@@ -85,7 +86,8 @@ export const cityDetector_func = () => {
   } else {
     const urlCity = getCityFromCurrentUrl();
     document.querySelector('[city-detector-tip]')?.classList.remove('hide');
-    document.querySelector('[city-guess]').textContent = defaultCity;
+    const cityGuess = document.querySelector('[city-guess]');
+    if (cityGuess) cityGuess.textContent = defaultCity;
     if (urlCity) {
       findAndUpdateCity(urlCity);
     } else {
@@ -106,15 +108,18 @@ export const cityDetector_func = () => {
   });
 
   button_yes?.addEventListener('click', () => {
-    const currentCity = document
-      .querySelector('[city-guess]')
-      .textContent.toLowerCase()
-      .replace(' ', '-');
-    sessionStorage.setItem('savedCity', currentCity);
+    const cityGuess = document.querySelector('[city-guess]');
 
-    findAndUpdateCity(currentCity);
+    if (cityGuess) {
+      const currentCity = cityGuess?.textContent?.toLowerCase().replace(' ', '-');
+      if (currentCity) {
+        sessionStorage.setItem('savedCity', currentCity);
 
-    window.location.href = '/city/' + currentCity;
+        findAndUpdateCity(currentCity);
+
+        window.location.href = '/city/' + currentCity;
+      }
+    }
   });
 
   button_no?.addEventListener('click', () => {
