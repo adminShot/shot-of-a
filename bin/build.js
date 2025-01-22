@@ -1,7 +1,23 @@
 import { log } from 'console';
 import * as esbuild from 'esbuild';
-import { readdirSync, rmSync } from 'fs';
-import { join, relative, sep } from 'path';
+import { rmSync } from 'fs';
+import { networkInterfaces } from 'os';
+
+// Функция для получения первого внешнего IPv4 адреса
+const getLocalIP = () => {
+  const interfaces = networkInterfaces();
+
+  for (const interfaceName of Object.keys(interfaces)) {
+    const addresses = interfaces[interfaceName];
+    for (const addressInfo of addresses) {
+      if (addressInfo.family === 'IPv4' && !addressInfo.internal && interfaceName !== 'lo') {
+        return addressInfo.address;
+      }
+    }
+  }
+
+  return 'localhost'; // fallback
+};
 
 // Config output
 const BUILD_DIRECTORY = 'dist/assets';
@@ -13,7 +29,8 @@ const ENTRY_POINTS = ['src/index.ts'];
 // Config dev serving
 const LIVE_RELOAD = !PRODUCTION;
 const SERVE_PORT = 3000;
-const SERVE_ORIGIN = `http://localhost:${SERVE_PORT}`;
+const LOCAL_IP = getLocalIP(); // Определяем IP здесь
+const SERVE_ORIGIN = `http://${LOCAL_IP}:${SERVE_PORT}`;
 
 // Create context
 const baseConfig = {
@@ -34,7 +51,7 @@ const prodConfig = {
   assetNames: '[name]-[hash]',
 };
 
-rmSync(BUILD_DIRECTORY, { recursive: true, force: true });
+rmSync('dist', { recursive: true, force: true });
 
 const context = await esbuild.context({
   ...baseConfig,
@@ -60,41 +77,13 @@ else {
     .serve({
       servedir: process.cwd(),
       port: SERVE_PORT,
+      host: '0.0.0.0', // Сервер слушает все интерфейсы
     })
     .then(logServedFiles);
 }
 
-/**
- * Logs information about the files that are being served during local development.
- */
 function logServedFiles() {
-  const getFiles = (dirPath) => {
-    const files = readdirSync(dirPath, { withFileTypes: true }).map((dirent) => {
-      const filePath = join(dirPath, dirent.name);
-      return dirent.isDirectory() ? getFiles(filePath) : filePath;
-    });
-    return files.flat();
-  };
-
-  const files = getFiles(BUILD_DIRECTORY);
-
-  const filesInfo = files
-    .filter((file) => !file.endsWith('.map'))
-    .map((file) => {
-      // Получаем путь относительно папки servedir ('dist')
-      const relativePath = relative('dist', file).split(sep).join('/');
-      const location = `${SERVE_ORIGIN}/${relativePath}`;
-
-      // Импорт-сниппет
-      const tag = location.endsWith('.css')
-        ? `<link href="${location}" rel="stylesheet" type="text/css"/>`
-        : `<script defer src="${location}"></script>`;
-
-      return {
-        'File Location': location,
-        'Import Suggestion': tag,
-      };
-    });
-
-  console.table(filesInfo);
+  console.log('\n\x1b[36m%s\x1b[0m', 'Available URLs:');
+  console.log(`Local:    \x1b[32m${SERVE_ORIGIN}\x1b[0m`);
+  console.log(`Network:  \x1b[32mhttp://${LOCAL_IP}:${SERVE_PORT}\x1b[0m\n`);
 }
