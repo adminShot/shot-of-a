@@ -185,6 +185,7 @@ export const cityDetector_func = () => {
       const isExperiencePage = /individual-art-experiences-/i.test(currentPath);
       const isEventPage = /events-/i.test(currentPath);
       const isDatesPage = /dates-night-/i.test(currentPath);
+      const isTeamBuilding = /team-building-/i.test(currentPath);
 
       // Проверка текущего города в URL и создание newUrl только при необходимости
       let newUrl = currentPath;
@@ -194,7 +195,7 @@ export const cityDetector_func = () => {
       if (match && match[1].toLowerCase().replace('-', ' ') !== cityName.toLowerCase()) {
         // Меняем только город в URL, если он отличается
         newUrl = currentPath.replace(currentCityPattern, `-${cityName.replace(' ', '-')}`);
-      } else if (!match && !(isExperiencePage || isEventPage || isDatesPage)) {
+      } else if (!match && !(isExperiencePage || isEventPage || isDatesPage || isTeamBuilding)) {
         // Если текущий URL не содержит город и это не страницы экспириенсов/эвентов
         newUrl = `/city/${cityName.replace(' ', '-')}`;
       }
