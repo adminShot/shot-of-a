@@ -1,11 +1,11 @@
 import { bookLinks_func } from '$utils/book-now-links';
 import { burger_btn } from '$utils/burger_btn';
-import { cityDetector_func } from '$utils/city-detector';
+import { initCityDetector } from '$utils/city-detector';
 import { contacts_redirect } from '$utils/contacts_redirect';
 import { countryInput_func } from '$utils/country-input';
 import { currentCity_input } from '$utils/currentCity_input';
 import { dates } from '$utils/dates_redirect';
-import { expParams_func } from '$utils/exp-catalog-params';
+import { initExpParams } from '$utils/exp-catalog-params';
 import { expSelector_func } from '$utils/exp-selector';
 import { expSliderLinkCreator_func } from '$utils/exp-slider-link-creator';
 import { expVideoOnHover_func } from '$utils/exp-video-on-hover';
@@ -21,9 +21,9 @@ import { selectionAllButton_func } from '$utils/selection-all-button';
 import { coloredSlider_func } from '$utils/sliders-colors';
 window.Webflow ||= [];
 window.Webflow.push(() => {
-  cityDetector_func();
+  initCityDetector();
   formSelectors_func();
-  expParams_func();
+  initExpParams();
   coloredSlider_func();
   expSliderLinkCreator_func();
   expVideoOnHover_func();

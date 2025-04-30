@@ -1,140 +1,92 @@
-export const expParams_func = () => {
-  const expParams_el = document.querySelector('[catalog-page-city]');
+/**
+ * Проставляет бейджи (best, age, price, count) на карточках
+ * исходя из города страницы. Никаких внешних массивов городов —
+ * всё читается из data-атрибутов самой карточки.
+ *
+ * markup карточки (пример):
+ * <div exp-collection-item
+ *      value-best="Moscow;SPB;"
+ *      value-age="Moscow@18;SPB@16;"
+ *      value-price="Moscow@5000;SPB@4500;"
+ *      value-count="Moscow@4;SPB@6;">
+ * ...
+ * </div>
+ */
 
-  if (expParams_el) {
-    //переменные
-    const page_city = expParams_el.getAttribute('catalog-page-city');
-    const array_expCollectionItems = document.querySelectorAll('[exp-collection-item]');
+export function initExpParams(): void {
+  const root = document.querySelector<HTMLElement>('[catalog-page-city]');
+  if (!root) return;
 
-    array_expCollectionItems.forEach((expCollectionItem) => {
-      //функция для бестселлера
-      function display_bestSeller() {
-        const currentElement = expCollectionItem.querySelector(
-          '[exp-columns_slider-header-meta-item=best]'
-        );
-        const currentAttributeValue = expCollectionItem.getAttribute('value-best');
-        const array_params = currentAttributeValue.split(';');
+  const pageCity = root.getAttribute('catalog-page-city')?.trim();
+  if (!pageCity) return;
 
-        array_params.forEach((param, id) => {
-          if (param === '') {
-            array_params.splice(id, 1);
-          }
-        });
+  const cards = document.querySelectorAll<HTMLElement>('[exp-collection-item]');
 
-        array_params.forEach((el) => {
-          if (el === page_city) {
-            currentElement.classList.remove('hide');
-          }
-        });
+  /**
+   * Универсальный разбор ";"-списка:
+   * '' -> [] ; 'Moscow;;SPB' -> ['Moscow','SPB']
+   */
+  const parseList = (raw: string | null): string[] =>
+    (raw ?? '')
+      .split(';')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+  cards.forEach((card) => {
+    /* ------------ BEST ------------ */
+    (() => {
+      const set = new Set(parseList(card.getAttribute('value-best')));
+      if (set.has(pageCity)) {
+        card
+          .querySelector<HTMLElement>('[exp-columns_slider-header-meta-item="best"]')
+          ?.classList.remove('hide');
       }
-      //функция для иконки возраста
-      function display_age() {
-        const allIconPresets = document.querySelectorAll('[icon-age]');
-        const currentElement = expCollectionItem.querySelector(
-          '[exp-columns_slider-header-meta-item=age]'
-        );
-        const currentAttributeValue = expCollectionItem.getAttribute('value-age');
-        const array_params = currentAttributeValue.split(';');
+    })();
 
-        array_params.forEach((param, id) => {
-          if (param === '') {
-            array_params.splice(id, 1);
-          }
-        });
+    /* ------------ AGE ICON ---------- */
+    (() => {
+      const pair = parseList(card.getAttribute('value-age'))
+        .map((p) => p.split('@'))
+        .find(([city]) => city === pageCity);
 
-        array_params.forEach((param) => {
-          const smallArray = param.split('@');
+      if (!pair) return;
 
-          if (smallArray[0] === page_city) {
-            allIconPresets.forEach((icon) => {
-              const iconAttribute = icon.getAttribute('icon-age');
-              if (smallArray[1] === iconAttribute) {
-                // Элемент, который мы хотим скопировать
-                const elementToCopy = icon;
+      const [, ageCode] = pair;
+      const preset = document.querySelector<HTMLElement>(`[icon-age="${ageCode}"]`);
+      const container = card.querySelector<HTMLElement>(
+        '[exp-columns_slider-header-meta-item="age"]'
+      );
 
-                // Новый родительский элемент
-                const newParent = currentElement;
-
-                // Создаем новый элемент и копируем HTML содержимое
-                const newElement = document.createElement('div');
-                newElement.innerHTML = elementToCopy.innerHTML;
-
-                // Вставляем новый элемент в нового родителя
-                newParent.appendChild(newElement);
-
-                // const needToCloneIcon = icon.cloneNode(true);
-                // currentElement?.appendChild(needToCloneIcon);
-              }
-            });
-          }
-        });
+      if (preset && container) {
+        container.appendChild(preset.cloneNode(true));
+        container.classList.remove('hide');
       }
-      //функция для цены
-      function display_price() {
-        const currentElement = expCollectionItem.querySelector(
-          '[exp-columns_slider-header-meta-item=price]'
-        );
-        const currentAttributeValue = expCollectionItem.getAttribute('value-price');
-        const array_params = currentAttributeValue.split(';');
+    })();
 
-        array_params.forEach((param, id) => {
-          if (param === '') {
-            array_params.splice(id, 1);
-          }
-        });
+    /* ------------ PRICE / COUNT (один шаблон) ---------- */
+    const applyTextParam = (attr: 'value-price' | 'value-count', slug: 'price' | 'count') => {
+      const pair = parseList(card.getAttribute(attr))
+        .map((p) => p.split('@'))
+        .find(([city]) => city === pageCity);
 
-        array_params.forEach((param) => {
-          const smallArray = param.split('@');
-          if (smallArray[0] === page_city) {
-            const city = smallArray[0];
-            const paramValue = smallArray[1];
+      if (!pair) return;
 
-            if (city === page_city) {
-              currentElement.classList.remove('hide');
-              const currentPriceTextValue = currentElement.querySelector(
-                '[exp-columns_slider-header-meta-item="price-text-value"]'
-              );
-              currentPriceTextValue.textContent = paramValue;
-            }
-          }
-        });
+      const [, value] = pair;
+
+      const container = card.querySelector<HTMLElement>(
+        `[exp-columns_slider-header-meta-item="${slug}"]`
+      );
+      const valueEl = container?.querySelector<HTMLElement>(
+        `[exp-columns_slider-header-meta-item="${slug}-text-value"]`
+      );
+
+      if (container && valueEl) {
+        valueEl.textContent = value;
+        container.classList.remove('hide');
       }
-      //функция для людей
-      function display_people() {
-        const currentElement = expCollectionItem.querySelector(
-          '[exp-columns_slider-header-meta-item=count]'
-        );
-        const currentAttributeValue = expCollectionItem.getAttribute('value-count');
-        const array_params = currentAttributeValue.split(';');
+    };
 
-        array_params.forEach((param, id) => {
-          if (param === '') {
-            array_params.splice(id, 1);
-          }
-        });
-
-        array_params.forEach((param) => {
-          const smallArray = param.split('@');
-          if (smallArray[0] === page_city) {
-            const city = smallArray[0];
-            const paramValue = smallArray[1];
-
-            if (city === page_city) {
-              currentElement.classList.remove('hide');
-              const currentPriceTextValue = currentElement.querySelector(
-                '[exp-columns_slider-header-meta-item="count-text-value"]'
-              );
-              currentPriceTextValue.textContent = paramValue;
-            }
-          }
-        });
-      }
-
-      //энтри-пойнты
-      display_bestSeller();
-      display_age();
-      display_price();
-      display_people();
-    });
-  }
-};
+    applyTextParam('value-price', 'price');
+    applyTextParam('value-count', 'count');
+  });
+}
