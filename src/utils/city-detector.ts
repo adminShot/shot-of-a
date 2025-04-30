@@ -10,37 +10,38 @@
  */
 export function initCityDetector(): void {
   /* ---------- helpers ---------- */
-
   const slugify = (s: string) => s.trim().toLowerCase().replace(/\s+/g, '-');
   const unslugify = (s: string) => s.replace(/-/g, ' ');
 
   /* ---------- pull cities from DOM ---------- */
-
   const cityButtons = document.querySelectorAll<HTMLElement>('[location-dropdown_button]');
   const citySet = new Map<string, string>(); // slug -> pretty
+
   cityButtons.forEach((btn) => {
-    const raw = (btn.getAttribute('location-dropdown_button') ?? btn.textContent ?? '').trim();
-    const slug = slugify(raw);
-    if (slug) citySet.set(slug, unslugify(slug));
+    const slugAttr = btn.getAttribute('location-dropdown_button')?.trim();
+    const slug = slugAttr ? slugify(slugAttr) : slugify(btn.textContent ?? '');
+    if (!slug) return;
+
+    const pretty = (btn.textContent ?? '').trim() || unslugify(slug); // <<< главное изменение
+    citySet.set(slug, pretty);
   });
+
   if (!citySet.size) {
     console.error('No cities found in DOM — aborting city detector.');
     return;
   }
 
-  const cities = [...citySet.keys()]; // ['new-york', ...]
+  const cities = [...citySet.keys()]; // ['new-york', …]
   const getPrettyBySlug = (slug: string) => citySet.get(slug) ?? slug;
   const cityAlternationRegex = cities.join('|'); // new-york|los-angeles|…
-  const cityInUrlRegex = new RegExp(`(?:/city/|/|-)(?:${cityAlternationRegex})$`, 'i');
+  const cityInUrlRegex = new RegExp(`(?:/city/|/|-)((${cityAlternationRegex}))(?:/|$)`, 'i');
   const cityTailRegex = new RegExp(`-(${cityAlternationRegex})$`, 'i');
 
   /* ---------- state ---------- */
-
-  const defaultCitySlug = cities[0]; // первый из списка
-  const savedCitySlug = sessionStorage.getItem('savedCity') ?? null; // slug
+  const defaultCitySlug = cities[0];
+  const savedCitySlug = sessionStorage.getItem('savedCity') ?? null;
 
   /* ---------- DOM shortcuts ---------- */
-
   const cityGuessEl = document.querySelector<HTMLElement>('[city-guess]');
   const tipEl = document.querySelector<HTMLElement>('[city-detector-tip]');
 
@@ -57,7 +58,6 @@ export function initCityDetector(): void {
 
   const activateCity = (slug: string) => {
     updateCityPlaceholders(slug);
-    // подчёркиваем активную кнопку, если надо
     cityButtons.forEach((btn) => {
       const btnSlug = slugify(btn.getAttribute('location-dropdown_button') ?? '');
       btn.classList.toggle('is-active', btnSlug === slug);
@@ -65,10 +65,9 @@ export function initCityDetector(): void {
   };
 
   /* ---------- city detection chain ---------- */
-
   const getCityFromUrl = (): string | null => {
-    const match = window.location.pathname.match(cityInUrlRegex);
-    return match ? slugify(match[0].split('/').pop() ?? '') : null;
+    const m = window.location.pathname.match(cityInUrlRegex);
+    return m ? slugify(m[1]) : null; // m[1] = 'irvine'
   };
 
   const resolveCityViaApi = async (): Promise<string | null> => {
@@ -83,29 +82,31 @@ export function initCityDetector(): void {
         sessionStorage.setItem('cityFromApi', slug);
         return slug;
       }
-    } catch (_) {
+    } catch {
       /* silent */
     }
     return null;
   };
 
   const decideCity = async (): Promise<string> => {
-    if (savedCitySlug) return savedCitySlug;
     const urlCity = getCityFromUrl();
-    if (urlCity) return urlCity;
+    if (urlCity) {
+      sessionStorage.setItem('savedCity', urlCity); // <- пишем в сессию
+      return urlCity;
+    }
+    if (savedCitySlug) return savedCitySlug;
     const apiCity = await resolveCityViaApi();
     if (apiCity) return apiCity;
     return defaultCitySlug;
   };
 
   /* ---------- kick off ---------- */
-
   decideCity().then((currentSlug) => {
     activateCity(currentSlug);
-
+    sessionStorage.setItem('savedCity', currentSlug);
     if (tipEl) {
       tipEl.classList.remove('hide');
-      cityGuessEl && (cityGuessEl.textContent = getPrettyBySlug(currentSlug));
+      if (cityGuessEl) cityGuessEl.textContent = getPrettyBySlug(currentSlug);
     }
   });
 
@@ -139,7 +140,6 @@ export function initCityDetector(): void {
   document.querySelectorAll<HTMLElement>('[nav-home-link]').forEach((link) => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
-
       const path = window.location.pathname;
       const cityInPath = path.match(cityTailRegex)?.[1] ?? null;
       const targetSlug = sessionStorage.getItem('savedCity') ?? defaultCitySlug;
@@ -156,7 +156,6 @@ export function initCityDetector(): void {
   const saveCityAndReload = (slug: string) => {
     sessionStorage.setItem('savedCity', slug);
 
-    /* replace city slug in current URL (when it’s already there) */
     let newUrl = window.location.pathname.replace(cityTailRegex, `-${slug}`);
     if (newUrl === window.location.pathname) {
       newUrl = `/city/${slug}`;
@@ -178,9 +177,9 @@ export function initCityDetector(): void {
   });
 
   /* b) special “home page tiles” */
-  document.querySelectorAll<HTMLElement>('[home-page-city-links]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const slug = slugify(btn.getAttribute('home-page-city-links') ?? '');
+  document.querySelectorAll<HTMLElement>('[home-page-city-links]').forEach((tile) => {
+    tile.addEventListener('click', () => {
+      const slug = slugify(tile.getAttribute('home-page-city-links') ?? '');
       if (slug) saveCityAndReload(slug);
     });
   });
