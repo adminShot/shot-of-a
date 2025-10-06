@@ -1,3 +1,4 @@
+import { addressByCity_func } from '$utils/address-by-city';
 import { bookLinks_func } from '$utils/book-now-links';
 import { burger_btn } from '$utils/burger_btn';
 import { initCityDetector } from '$utils/city-detector';
@@ -35,6 +36,7 @@ window.Webflow.push(() => {
   faqHider_func();
   bookLinks_func();
   experienceStateFilter_func();
+  addressByCity_func();
   selectionAllButton_func();
   countryInput_func();
   footer_yer();
