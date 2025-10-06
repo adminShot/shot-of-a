@@ -10,6 +10,7 @@ import { expSelector_func } from '$utils/exp-selector';
 import { expSliderLinkCreator_func } from '$utils/exp-slider-link-creator';
 import { expVideoOnHover_func } from '$utils/exp-video-on-hover';
 import { catalogItemExp_func } from '$utils/exp-video-on-hover-catalog-page';
+import { experienceStateFilter_func } from '$utils/experience-state-filter';
 import { faqHider_func } from '$utils/faq-hider';
 import { footer_yer } from '$utils/footer-year';
 import { formSelectors_func } from '$utils/form-selectors';
@@ -33,6 +34,7 @@ window.Webflow.push(() => {
   expSelector_func();
   faqHider_func();
   bookLinks_func();
+  experienceStateFilter_func();
   selectionAllButton_func();
   countryInput_func();
   footer_yer();
