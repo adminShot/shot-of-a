@@ -4,7 +4,7 @@
  * 2. Пытается определить текущий город в такой очередности:
  *    a) sessionStorage.savedCity
  *    b) /city/<slug> в URL
- *    c) ipinfo.io
+ *    c) https://www.shotofart.com/__state
  *    d) дефолт (первый город в списке)
  * 3. Обновляет плейсхолдеры, ссылочки и всё остальное.
  */
@@ -75,9 +75,9 @@ export function initCityDetector(): void {
       const cached = sessionStorage.getItem('cityFromApi');
       if (cached) return cached;
 
-      const res = await fetch('https://ipinfo.io?token=e244e6770c04f8');
+      const res = await fetch('https://www.shotofart.com/__state');
       const json = await res.json();
-      const slug = slugify(json.city);
+      const slug = slugify(json.state);
       if (cities.includes(slug)) {
         sessionStorage.setItem('cityFromApi', slug);
         return slug;
@@ -107,6 +107,32 @@ export function initCityDetector(): void {
     if (tipEl) {
       tipEl.classList.remove('hide');
       if (cityGuessEl) cityGuessEl.textContent = getPrettyBySlug(currentSlug);
+    }
+
+    // Staging badge: show current city on webflow.io for testing
+    try {
+      if (location.hostname.includes('webflow.io')) {
+        const badge = document.createElement('div');
+        badge.textContent = `city: ${currentSlug}`;
+        badge.style.cssText = [
+          'position:fixed',
+          'left:12px',
+          'bottom:12px',
+          'background:#fff',
+          'color:#111',
+          'padding:6px 10px',
+          'border:1px solid #e5e7eb',
+          'border-radius:6px',
+          'box-shadow:0 2px 8px rgba(0,0,0,0.08)',
+          'font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji"',
+          'font-size:12px',
+          'z-index:99999',
+          'pointer-events:none',
+        ].join(';');
+        document.body.appendChild(badge);
+      }
+    } catch {
+      /* ignore */
     }
   });
 
