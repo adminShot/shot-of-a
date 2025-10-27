@@ -109,11 +109,11 @@ export function initCityDetector(): void {
       if (cityGuessEl) cityGuessEl.textContent = getPrettyBySlug(currentSlug);
     }
 
-    // Staging badge: show API-detected city on webflow.io for testing
+    // Staging badge: show current city on webflow.io for testing
     try {
       if (location.hostname.includes('webflow.io')) {
         const badge = document.createElement('div');
-        badge.textContent = 'api: …';
+        badge.textContent = `city: ${currentSlug}`;
         badge.style.cssText = [
           'position:fixed',
           'left:12px',
@@ -130,18 +130,6 @@ export function initCityDetector(): void {
           'pointer-events:none',
         ].join(';');
         document.body.appendChild(badge);
-
-        // Fetch API state specifically for badge (independent of resolution chain)
-        (async () => {
-          try {
-            const res = await fetch('https://www.shotofart.com/__state');
-            const json = await res.json();
-            const apiSlug = slugify(json.state);
-            if (apiSlug) badge.textContent = `api: ${apiSlug}`;
-          } catch {
-            badge.textContent = 'api: n/a';
-          }
-        })();
       }
     } catch {
       /* ignore */
