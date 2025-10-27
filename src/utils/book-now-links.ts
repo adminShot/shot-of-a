@@ -43,11 +43,15 @@ export const bookLinks_func = () => {
     city: string | null
   ): { city: string; value: string } | null => {
     if (!pairs.length) return null;
+    // 1) точное совпадение
     if (city) {
       const exact = pairs.find((p) => p.city === city);
       if (exact) return exact;
     }
-    // fallback: возьмём первый доступный
+    // 2) жёсткий fallback: new-york
+    const ny = pairs.find((p) => p.city === 'new-york');
+    if (ny) return ny;
+    // 3) мягкий fallback: первый доступный
     return pairs[0];
   };
 

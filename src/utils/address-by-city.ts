@@ -28,7 +28,8 @@ export function addressByCity_func(): void {
     const bodyAttr = document.body.getAttribute('this-is-a-city-page');
     if (bodyAttr) currentCity = slugify(bodyAttr);
   }
-  if (!currentCity) return;
+  // Fallback на Нью-Йорк, если город не удалось определить
+  if (!currentCity) currentCity = 'new-york';
 
   const parseList = (raw: string | null): string[] =>
     (raw ?? '')

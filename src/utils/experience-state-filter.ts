@@ -48,17 +48,22 @@ export function experienceStateFilter_func(): void {
   }
 
   if (!currentState) {
-    // fallback: collect first available from cards
+    // fallback: отдать предпочтение 'new-york', если она есть среди карточек,
+    // иначе взять первое доступное значение
+    let candidate: string | null = null;
     for (const card of Array.from(cards)) {
       const list =
         parseList(card.getAttribute('available-states')) ||
         parseList(card.getAttribute('available-cities')) ||
         parseList(card.getAttribute('data-available'));
-      if (list.length) {
-        currentState = list[0];
+      if (!list.length) continue;
+      if (list.includes('new-york')) {
+        candidate = 'new-york';
         break;
       }
+      if (!candidate) candidate = list[0];
     }
+    if (candidate) currentState = candidate;
   }
 
   if (!currentState) return;
