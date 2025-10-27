@@ -8,7 +8,7 @@
  *   1) <body this-is-a-city-page="…"> (preferred on CMS pages)
  *   2) sessionStorage.savedCity
  *   3) "…/city/<slug>…" in URL
- *   4) first state seen among cards
+ *   4) if city can't be resolved or isn't present in cards — show all (no filtering)
  * - Cards without a matching state get a `hide` class.
  * - Booking/payment links inside the cards can be handled by existing
  *   `[book-now-button]` + `price-info` attributes via bookLinks_func.
@@ -48,25 +48,10 @@ export function experienceStateFilter_func(): void {
   }
 
   if (!currentState) {
-    // fallback: отдать предпочтение 'new-york', если она есть среди карточек,
-    // иначе взять первое доступное значение
-    let candidate: string | null = null;
-    for (const card of Array.from(cards)) {
-      const list =
-        parseList(card.getAttribute('available-states')) ||
-        parseList(card.getAttribute('available-cities')) ||
-        parseList(card.getAttribute('data-available'));
-      if (!list.length) continue;
-      if (list.includes('new-york')) {
-        candidate = 'new-york';
-        break;
-      }
-      if (!candidate) candidate = list[0];
-    }
-    if (candidate) currentState = candidate;
+    // Город не определён — оставляем все карточки видимыми
+    cards.forEach((c) => c.classList.remove('hide'));
+    return;
   }
-
-  if (!currentState) return;
 
   // Helper: parse "city@value;city2@value2" → [city, city2]
   const parseKeyed = (raw: string | null): string[] =>
@@ -76,6 +61,29 @@ export function experienceStateFilter_func(): void {
       .filter(Boolean)
       .map((pair) => slugify(pair.split('@')[0] ?? ''))
       .filter(Boolean);
+
+  // Если ни одна карточка не содержит currentState — показываем все
+  const anyHasCurrent = Array.from(cards).some((card) => {
+    const explicit =
+      parseList(card.getAttribute('available-states')) ||
+      parseList(card.getAttribute('available-cities')) ||
+      parseList(card.getAttribute('data-available'));
+
+    const derived = new Set<string>([
+      ...parseKeyed(card.getAttribute('value-price')),
+      ...parseKeyed(card.getAttribute('value-count')),
+      ...parseKeyed(card.getAttribute('value-age')),
+    ]);
+
+    const available = explicit.length ? explicit : Array.from(derived);
+    if (!available.length) return true; // treat as visible
+    return available.includes(currentState!);
+  });
+
+  if (!anyHasCurrent) {
+    cards.forEach((c) => c.classList.remove('hide'));
+    return;
+  }
 
   cards.forEach((card) => {
     const explicit =

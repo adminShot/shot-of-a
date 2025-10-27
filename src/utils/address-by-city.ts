@@ -28,8 +28,11 @@ export function addressByCity_func(): void {
     const bodyAttr = document.body.getAttribute('this-is-a-city-page');
     if (bodyAttr) currentCity = slugify(bodyAttr);
   }
-  // Fallback на Нью-Йорк, если город не удалось определить
-  if (!currentCity) currentCity = 'new-york';
+  // Если город не определён — показываем все адресные блоки
+  if (!currentCity) {
+    document.querySelectorAll<HTMLElement>('[address-city]')[0].classList.remove('hide');
+    return;
+  }
 
   const parseList = (raw: string | null): string[] =>
     (raw ?? '')
@@ -38,9 +41,16 @@ export function addressByCity_func(): void {
       .filter(Boolean);
 
   // Show/hide duplicated address blocks: [address-city="new-york;los-angeles"]
-  document.querySelectorAll<HTMLElement>('[address-city]').forEach((el) => {
+  let matched = false;
+  const nodes = Array.from(document.querySelectorAll<HTMLElement>('[address-city]'));
+  nodes.forEach((el) => {
     const cities = parseList(el.getAttribute('address-city'));
     if (!cities.length) return; // no binding — do nothing
-    el.classList.toggle('hide', !cities.includes(currentCity!));
+    const show = cities.includes(currentCity!);
+    if (show) matched = true;
+    el.classList.toggle('hide', !show);
   });
+
+  // Если ни один блок не соответствует — показываем все
+  if (!matched) nodes.forEach((el) => el.classList.remove('hide'));
 }
