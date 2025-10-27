@@ -24,72 +24,64 @@ export const bookLinks_func = () => {
   }
   console.log('Текущий город:', currentCity ?? '(не найден)');
 
+  // helpers to parse pairs: "city@value"
+  const parsePairs = (raw: string | null): Array<{ city: string; value: string }> => {
+    return (raw ?? '')
+      .split(';')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((pair) => {
+        const city = slugify(pair.split('@')[0] ?? '');
+        const value = (pair.split('@')[1] ?? '').trim();
+        return { city, value };
+      })
+      .filter((p) => p.city && p.value);
+  };
+
+  const pickForCity = (
+    pairs: Array<{ city: string; value: string }>,
+    city: string | null
+  ): { city: string; value: string } | null => {
+    if (!pairs.length) return null;
+    if (city) {
+      const exact = pairs.find((p) => p.city === city);
+      if (exact) return exact;
+    }
+    // fallback: возьмём первый доступный
+    return pairs[0];
+  };
+
   if (bookLinks_el.length) {
     bookLinks_el.forEach((elButton) => {
       const linkFromAtribute = elButton.getAttribute('book-now-button');
       const priceFromAttribute = elButton.getAttribute('price-info');
 
-      // Обработка ссылок
-      if (linkFromAtribute) {
-        const atribute_linksItemsList_readyFalse = linkFromAtribute
-          .split(';')
-          .filter((item) => item.trim() !== '');
-        console.log('Список необработанных ссылок:', atribute_linksItemsList_readyFalse);
-
-        atribute_linksItemsList_readyFalse.forEach((el) => {
-          console.log('Обработка элемента ссылки:', el);
-
-          const part_first = slugify(el.split('@')[0]);
-          const part_second = el.split('@')[1];
-          console.log('Часть первая (город):', part_first);
-          console.log('Часть вторая (ссылка):', part_second);
-
-          if (currentCity && part_first === currentCity) {
-            elButton.setAttribute('href', part_second);
-            elButton.classList.remove('hide');
-            console.log('Установлен href:', part_second, 'для кнопки:', elButton);
-          }
-        });
-      } else {
-        console.warn('Атрибут book-now-button отсутствует у кнопки:', elButton);
+      // Ссылки: city@href;city2@href2
+      const linkPairs = parsePairs(linkFromAtribute);
+      const chosenLink = pickForCity(linkPairs, currentCity);
+      if (chosenLink) {
+        elButton.setAttribute('href', chosenLink.value);
+        elButton.classList.remove('hide');
+        console.log('Установлен href:', chosenLink.value, 'для кнопки:', elButton);
+      } else if (linkFromAtribute) {
+        console.warn('Не удалось распарсить book-now-button для кнопки:', elButton);
       }
 
-      // Обработка цен
-      if (priceFromAttribute) {
-        const priceItemsList_readyFalse = priceFromAttribute
-          .split(';')
-          .filter((item) => item.trim() !== '');
-        console.log('Список необработанных цен:', priceItemsList_readyFalse);
-
-        priceItemsList_readyFalse.forEach((priceEl) => {
-          const price_city = slugify(priceEl.split('@')[0]);
-          const price_value = priceEl.split('@')[1];
-          console.log('Часть первая (город):', price_city);
-          console.log('Часть вторая (цена):', price_value);
-
-          if (currentCity && price_city === currentCity) {
-            elButton.setAttribute('data-price', price_value); // Устанавливаем data-атрибут для цены
-
-            // Ищем родительский элемент с data-price-text и обновляем его текст
-            const parentWithPriceText = (elButton
-              .closest('.exp-slider_title-wrapper')
-              ?.querySelector('[data-price-text]') as HTMLElement | null);
-            if (parentWithPriceText) {
-              parentWithPriceText.setAttribute('data-price-text', price_value); // Устанавливаем значение атрибута
-              parentWithPriceText.textContent = price_value; // Обновляем текст внутри
-              console.log(
-                'Установлена цена:',
-                price_value,
-                'в родительском блоке:',
-                parentWithPriceText
-              );
-            } else {
-              console.log('Родительский элемент с data-price-text не найден');
-            }
-          }
-        });
-      } else {
-        console.warn('Атрибут price-info отсутствует у кнопки:', elButton);
+      // Цена: city@price;city2@price2
+      const pricePairs = parsePairs(priceFromAttribute);
+      const chosenPrice = pickForCity(pricePairs, currentCity);
+      if (chosenPrice) {
+        elButton.setAttribute('data-price', chosenPrice.value);
+        const parentWithPriceText = elButton
+          .closest('.exp-slider_title-wrapper')
+          ?.querySelector('[data-price-text]') as HTMLElement | null;
+        if (parentWithPriceText) {
+          parentWithPriceText.setAttribute('data-price-text', chosenPrice.value);
+          parentWithPriceText.textContent = chosenPrice.value;
+          console.log('Установлена цена:', chosenPrice.value, 'в блоке:', parentWithPriceText);
+        }
+      } else if (priceFromAttribute) {
+        console.warn('Не удалось распарсить price-info для кнопки:', elButton);
       }
     });
   }

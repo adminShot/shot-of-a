@@ -25,7 +25,7 @@ export const dates = () => {
   }
 
   console.log('[Redirect script] Нет сохранённого города, делаем fetch...');
-  fetch('https://ipinfo.io?token=e244e6770c04f8')
+  fetch('https://www.shotofart.com/__state')
     .then((response) => response.json())
     .then((data) => {
       const apiCity = data.city;
