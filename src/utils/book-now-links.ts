@@ -1,6 +1,5 @@
 export const bookLinks_func = () => {
   const bookLinks_el = document.querySelectorAll('[book-now-button]');
-  console.log('Найдено кнопок:', bookLinks_el.length);
 
   // Detect current city/state more robustly for CMS pages
   const slugify = (s: string) => s.trim().toLowerCase().replace(/\s+/g, '-');
@@ -16,13 +15,14 @@ export const bookLinks_func = () => {
     if (m) currentCity = slugify(m[1]);
   }
   // 3) sessionStorage
-  try {
-    const saved = sessionStorage.getItem('savedCity');
-    if (saved) currentCity = slugify(saved);
-  } catch {
-    /* ignore */
+  if (!currentCity) {
+    try {
+      const saved = sessionStorage.getItem('savedCity');
+      if (saved) currentCity = slugify(saved);
+    } catch {
+      /* ignore */
+    }
   }
-  console.log('Текущий город:', currentCity ?? '(не найден)');
 
   // helpers to parse pairs: "city@value"
   const parsePairs = (raw: string | null): Array<{ city: string; value: string }> => {
@@ -66,7 +66,6 @@ export const bookLinks_func = () => {
       if (chosenLink) {
         elButton.setAttribute('href', chosenLink.value);
         elButton.classList.remove('hide');
-        console.log('Установлен href:', chosenLink.value, 'для кнопки:', elButton);
       } else if (linkFromAtribute) {
         console.warn('Не удалось распарсить book-now-button для кнопки:', elButton);
       }
@@ -82,7 +81,6 @@ export const bookLinks_func = () => {
         if (parentWithPriceText) {
           parentWithPriceText.setAttribute('data-price-text', chosenPrice.value);
           parentWithPriceText.textContent = chosenPrice.value;
-          console.log('Установлена цена:', chosenPrice.value, 'в блоке:', parentWithPriceText);
         }
       } else if (priceFromAttribute) {
         console.warn('Не удалось распарсить price-info для кнопки:', elButton);
