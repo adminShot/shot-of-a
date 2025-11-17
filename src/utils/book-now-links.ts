@@ -5,22 +5,22 @@ export const bookLinks_func = () => {
   // Detect current city/state more robustly for CMS pages
   const slugify = (s: string) => s.trim().toLowerCase().replace(/\s+/g, '-');
   let currentCity: string | null = null;
-  // 1) sessionStorage
-  try {
-    const saved = sessionStorage.getItem('savedCity');
-    if (saved) currentCity = slugify(saved);
-  } catch {
-    /* ignore */
+  // 1) body attr — на CMS может отсутствовать
+  if (!currentCity) {
+    const attr = document.body.getAttribute('this-is-a-city-page');
+    if (attr) currentCity = slugify(attr);
   }
   // 2) URL
   if (!currentCity) {
     const m = window.location.pathname.match(/(?:\/city\/|\/|-)([a-z0-9\-]+)(?:$|\/)/i);
     if (m) currentCity = slugify(m[1]);
   }
-  // 3) body attr — на CMS может отсутствовать
-  if (!currentCity) {
-    const attr = document.body.getAttribute('this-is-a-city-page');
-    if (attr) currentCity = slugify(attr);
+  // 3) sessionStorage
+  try {
+    const saved = sessionStorage.getItem('savedCity');
+    if (saved) currentCity = slugify(saved);
+  } catch {
+    /* ignore */
   }
   console.log('Текущий город:', currentCity ?? '(не найден)');
 
