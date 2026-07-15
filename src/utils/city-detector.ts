@@ -1,211 +1,215 @@
-export const cityDetector_func = () => {
-  const elements_cityDropdown = document.querySelectorAll('[location-dropdown]');
+/**
+ * Глобальный детектор города.
+ * 1. Берёт все <… location-dropdown_button …> → строит массив городов.
+ * 2. Пытается определить текущий город в такой очередности:
+ *    a) sessionStorage.savedCity
+ *    b) /city/<slug> в URL
+ *    c) https://www.shotofart.com/__state
+ *    d) дефолт (первый город в списке)
+ * 3. Обновляет плейсхолдеры, ссылочки и всё остальное.
+ */
+export function initCityDetector(): void {
+  /* ---------- helpers ---------- */
+  const slugify = (s: string) => s.trim().toLowerCase().replace(/\s+/g, '-');
+  const unslugify = (s: string) => s.replace(/-/g, ' ');
 
-  if (elements_cityDropdown.length) {
-    setTimeout(function () {
-      // все переменные
-      const defaultCity = 'New York';
-      const all_cityButtons = document.querySelectorAll(
-        '[section_menu] [location-dropdown_button]'
-      );
-      const button_yes = document.querySelector('[is-your-city-new-york="yes"]');
-      const button_no = document.querySelector('[is-your-city-new-york="no"]');
-      const button_ok = document.querySelector('[is-your-city-new-york="ok"]');
-      const button_close = document.querySelector('[city-detector-tip-close]');
-      const el_cityPopup = document.querySelector('[city-detector-tip]');
-      const el_cityName = document.querySelector('[city-guess]');
-      const el_cityQuestion = document.querySelector('[city-question]');
-      const el_locationDropdownList = document.querySelector('[location-dropdown_list]');
-      let element_detectedCity;
+  /* ---------- pull cities from DOM ---------- */
+  const cityButtons = document.querySelectorAll<HTMLElement>('[location-dropdown_button]');
+  const citySet = new Map<string, string>(); // slug -> pretty
 
-      // функция с API
-      function func_locationApi() {
-        console.log('func_locationApi stared');
+  cityButtons.forEach((btn) => {
+    const slugAttr = btn.getAttribute('location-dropdown_button')?.trim();
+    const slug = slugAttr ? slugify(slugAttr) : slugify(btn.textContent ?? '');
+    if (!slug) return;
 
-        let geocoder;
+    const pretty = (btn.textContent ?? '').trim() || unslugify(slug); // <<< главное изменение
+    citySet.set(slug, pretty);
+  });
 
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(successFunction, errorFunction);
-        }
-
-        function successFunction(position) {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          codeLatLng(lat, lng);
-        }
-
-        function errorFunction() {
-          console.log('Geocoder failed');
-        }
-
-        function initialize() {
-          geocoder = new google.maps.Geocoder();
-        }
-
-        function codeLatLng(lat, lng) {
-          const latlng = new google.maps.LatLng(lat, lng);
-          geocoder.geocode({ latLng: latlng }, function (results, status) {
-            if (status == google.maps.GeocoderStatus.OK) {
-              if (results[1]) {
-                let city;
-                for (let i = 0; i < results[0].address_components.length; i++) {
-                  for (let b = 0; b < results[0].address_components[i].types.length; b++) {
-                    if (results[0].address_components[i].types[b] == 'locality') {
-                      city = results[0].address_components[i];
-                      break;
-                    }
-                  }
-                }
-                if (city) {
-                  console.log(city.long_name);
-                  // detecedCity = city.long_name;
-                  // detecedCityCapitalize = detecedCity;
-                  // detecedCity = detecedCity.toString().toUpperCase();
-
-                  all_cityButtons.forEach((cityButton) => {
-                    if (cityButton.textContent.toUpperCase() === city.long_name.toUpperCase()) {
-                      console.log('город совпал');
-                      element_detectedCity = cityButton;
-                      cityGuess();
-                    } else {
-                      console.log('город не со списком совпал');
-                      //тут надо new york установить
-                      all_cityButtons.forEach((cityButton) => {
-                        if (cityButton.textContent.toUpperCase() === defaultCity.toUpperCase()) {
-                          console.log('вызываем defaultCity');
-                          element_detectedCity = cityButton;
-                          cityGuess();
-                        }
-                      });
-                    }
-                  });
-                } else {
-                  console.log('City not found');
-
-                  all_cityButtons.forEach((cityButton) => {
-                    if (cityButton.textContent.toUpperCase() === defaultCity.toUpperCase()) {
-                      console.log('вызываем defaultCity');
-                      element_detectedCity = cityButton;
-                      cityGuess();
-                    }
-                  });
-                }
-              } else {
-                console.log('No results found');
-
-                all_cityButtons.forEach((cityButton) => {
-                  if (cityButton.textContent.toUpperCase() === defaultCity.toUpperCase()) {
-                    console.log('вызываем defaultCity');
-                    element_detectedCity = cityButton;
-                    cityGuess();
-                  }
-                });
-              }
-            } else {
-              console.log('Geocoder failed due to: ' + status);
-
-              all_cityButtons.forEach((cityButton) => {
-                if (cityButton.textContent.toUpperCase() === defaultCity.toUpperCase()) {
-                  console.log('вызываем defaultCity');
-                  element_detectedCity = cityButton;
-                  cityGuess();
-                }
-              });
-            }
-          });
-        }
-
-        initialize();
-        //––––––––––––––––––––––––––––––––––––––––––
-      }
-      // func проверить выбран ли город, если выбран —> redirect
-      // func при клике на yes –> сохранять в выбранный город
-      // формировать список из городов, которые в dropdown
-      // функция, которая проверяет, если определившийся город из списка или нет
-      // функция, которая меняет название в span
-      // функция редиректа
-      // функция обработки кнопки yes
-      button_yes.addEventListener('click', function () {
-        saveCity(element_detectedCity);
-      });
-      // функция обработки кнопки no
-      button_no.addEventListener('click', function () {
-        // el_cityQuestion.textContent = el_cityQuestion.getAttribute('city-question');
-        setTimeout(function () {
-          el_cityPopup.classList.add('hide');
-          el_locationDropdownList.classList.add('w--open');
-        }, 0);
-      });
-      // функция обработки кнопки close
-      button_close.addEventListener('click', function () {
-        el_cityPopup.classList.add('hide');
-      });
-      // функция предположения
-      function cityGuess() {
-        el_cityName.textContent = element_detectedCity.textContent;
-        el_cityPopup.classList.remove('hide');
-      }
-      // функция для сохранения города в localStorage
-      function saveCity(city) {
-        const currentCity = city.getAttribute('location-dropdown_button');
-        const currentCityLink = city.getAttribute('href');
-
-        localStorage.setItem('savedCity', currentCity);
-        console.log(`Город ${currentCity} сохранён в localStorage.`);
-        el_cityPopup.classList.add('hide');
-        window.location.href = currentCityLink;
-      }
-      // функция для загрузки сохраненного города из localStorage
-      // функция для отображения подтверждающего диалога выбора города
-      // функция для обновления интерфейса на основе выбранного города
-      // функция для инициализации всех событий и начального состояния
-      // точки входа
-      function changeNamePlaceholder(city) {
-        const cityName = city.getAttribute('location-dropdown_button');
-        const allCityPlaceholders = document.querySelectorAll('[city-dropdown-name-placeholder]');
-        allCityPlaceholders.forEach((placeholder) => {
-          placeholder.textContent = cityName;
-        });
-      }
-
-      // Проверяем, есть ли сохранённый город в localStorage
-      if (localStorage.getItem('savedCity')) {
-        // Получаем значение сохранённого города
-        const savedCity = localStorage.getItem('savedCity');
-
-        // Выводим сохранённый город
-
-        // changeNamePlaceholder(element_detectedCity);
-        // console.log(element_detectedCity);
-        findElementOfCurrentCity(savedCity);
-
-        console.log(`Сохранённый город: ${savedCity}`);
-      } else {
-        // Если город не сохранён, выводим сообщение
-        console.log('Сохранённого города нет');
-        func_locationApi();
-      }
-
-      all_cityButtons.forEach((cityButton) => {
-        cityButton.addEventListener('click', function () {
-          saveCity(cityButton);
-          changeNamePlaceholder(cityButton);
-        });
-      });
-
-      //
-      function findElementOfCurrentCity(textNameOfCity) {
-        all_cityButtons.forEach((cityButton) => {
-          if (
-            cityButton.getAttribute('location-dropdown_button').toUpperCase() ===
-            textNameOfCity.toUpperCase()
-          ) {
-            const currentCityButton = cityButton;
-            changeNamePlaceholder(currentCityButton);
-          }
-        });
-      }
-      //–––––––
-    }, 2000);
+  if (!citySet.size) {
+    console.error('No cities found in DOM — aborting city detector.');
+    return;
   }
-};
+
+  const cities = [...citySet.keys()]; // ['new-york', …]
+  const getPrettyBySlug = (slug: string) => citySet.get(slug) ?? slug;
+  const cityAlternationRegex = cities.join('|'); // new-york|los-angeles|…
+  const cityInUrlRegex = new RegExp(`(?:/city/|/|-)((${cityAlternationRegex}))(?:/|$)`, 'i');
+  // Матчим слаг города и в КОНЦЕ пути, и когда за ним идёт «/<категория>»
+  // (напр. /individual-art-experiences-new-york/date-couples-painting), чтобы
+  // переключатель менял город на месте, а не уходил в фолбэк /city/<slug>.
+  const cityTailRegex = new RegExp(`-(${cityAlternationRegex})(?=/|$)`, 'i');
+
+  /* ---------- state ---------- */
+  const defaultCitySlug = cities[0];
+  const savedCitySlug = sessionStorage.getItem('savedCity') ?? null;
+
+  /* ---------- DOM shortcuts ---------- */
+  const cityGuessEl = document.querySelector<HTMLElement>('[city-guess]');
+  const tipEl = document.querySelector<HTMLElement>('[city-detector-tip]');
+
+  const updateCityPlaceholders = (slug: string) => {
+    const pretty = getPrettyBySlug(slug);
+    document.querySelectorAll('[city-dropdown-name-placeholder]').forEach((node) => {
+      node.textContent = pretty;
+      node.classList.remove('opacity-0');
+    });
+    document
+      .querySelectorAll('[location-dropdown]')
+      .forEach((d) => d.classList.remove('opacity-0'));
+  };
+
+  const activateCity = (slug: string) => {
+    updateCityPlaceholders(slug);
+    cityButtons.forEach((btn) => {
+      const btnSlug = slugify(btn.getAttribute('location-dropdown_button') ?? '');
+      btn.classList.toggle('is-active', btnSlug === slug);
+    });
+  };
+
+  /* ---------- city detection chain ---------- */
+  const getCityFromUrl = (): string | null => {
+    const m = window.location.pathname.match(cityInUrlRegex);
+    return m ? slugify(m[1]) : null; // m[1] = 'irvine'
+  };
+
+  const resolveCityViaApi = async (): Promise<string | null> => {
+    try {
+      const cached = sessionStorage.getItem('cityFromApi');
+      if (cached) return cached;
+
+      const res = await fetch('https://www.shotofart.com/__state');
+      const json = await res.json();
+      const slug = slugify(json.state);
+      if (cities.includes(slug)) {
+        sessionStorage.setItem('cityFromApi', slug);
+        return slug;
+      }
+    } catch {
+      /* silent */
+    }
+    return null;
+  };
+
+  const decideCity = async (): Promise<string> => {
+    const urlCity = getCityFromUrl();
+    if (urlCity) {
+      sessionStorage.setItem('savedCity', urlCity); // <- пишем в сессию
+      return urlCity;
+    }
+    if (savedCitySlug) return savedCitySlug;
+    const apiCity = await resolveCityViaApi();
+    if (apiCity) return apiCity;
+    return defaultCitySlug;
+  };
+
+  /* ---------- kick off ---------- */
+  decideCity().then((currentSlug) => {
+    activateCity(currentSlug);
+    sessionStorage.setItem('savedCity', currentSlug);
+    if (tipEl) {
+      tipEl.classList.remove('hide');
+      if (cityGuessEl) cityGuessEl.textContent = getPrettyBySlug(currentSlug);
+    }
+
+    // Staging badge: show current city on webflow.io for testing
+    try {
+      if (location.hostname.includes('webflow.io')) {
+        const badge = document.createElement('div');
+        badge.textContent = `city: ${currentSlug}`;
+        badge.style.cssText = [
+          'position:fixed',
+          'left:12px',
+          'bottom:12px',
+          'background:#fff',
+          'color:#111',
+          'padding:6px 10px',
+          'border:1px solid #e5e7eb',
+          'border-radius:6px',
+          'box-shadow:0 2px 8px rgba(0,0,0,0.08)',
+          'font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji"',
+          'font-size:12px',
+          'z-index:99999',
+          'pointer-events:none',
+        ].join(';');
+        document.body.appendChild(badge);
+      }
+    } catch {
+      /* ignore */
+    }
+  });
+
+  /* ---------- UI events ---------- */
+
+  /* 1. buttons inside the tip (“yes / no / close”) */
+  if (tipEl) {
+    const btnYes = document.querySelector('[is-your-city-new-york="yes"]');
+    const btnNo = document.querySelector('[is-your-city-new-york="no"]');
+    const btnClose = document.querySelector('[city-detector-tip-close]');
+
+    [btnYes, btnNo, btnClose].forEach((btn) =>
+      btn?.addEventListener('click', () => tipEl.classList.add('hide'))
+    );
+
+    btnYes?.addEventListener('click', () => {
+      const slug = slugify(cityGuessEl?.textContent ?? '');
+      if (slug) {
+        sessionStorage.setItem('savedCity', slug);
+        activateCity(slug);
+        window.location.href = `/city/${slug}`;
+      }
+    });
+
+    btnNo?.addEventListener('click', () => {
+      document.querySelector('[location-dropdown_list]')?.classList.add('w--open');
+    });
+  }
+
+  /* 2. nav-home links — перекидываем на /city/<slug> если уже на городском урле */
+  document.querySelectorAll<HTMLElement>('[nav-home-link]').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const path = window.location.pathname;
+      const cityInPath = path.match(cityTailRegex)?.[1] ?? null;
+      const targetSlug = sessionStorage.getItem('savedCity') ?? defaultCitySlug;
+
+      if (cityInPath) {
+        window.location.href = `/city/${targetSlug}`;
+      } else {
+        window.location.href = link.getAttribute('href') ?? '#';
+      }
+    });
+  });
+
+  /* 3. every city-button saves city and refreshes */
+  const saveCityAndReload = (slug: string) => {
+    sessionStorage.setItem('savedCity', slug);
+
+    let newUrl = window.location.pathname.replace(cityTailRegex, `-${slug}`);
+    if (newUrl === window.location.pathname) {
+      newUrl = `/city/${slug}`;
+    }
+
+    const hash = window.location.hash;
+    if (`${newUrl}${hash}` !== window.location.href) {
+      window.location.href = `${newUrl}${hash}`;
+    }
+  };
+
+  /* a) dropdown & header buttons */
+  cityButtons.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const slug = slugify(btn.getAttribute('location-dropdown_button') ?? '');
+      if (slug) saveCityAndReload(slug);
+    });
+  });
+
+  /* b) special “home page tiles” */
+  document.querySelectorAll<HTMLElement>('[home-page-city-links]').forEach((tile) => {
+    tile.addEventListener('click', () => {
+      const slug = slugify(tile.getAttribute('home-page-city-links') ?? '');
+      if (slug) saveCityAndReload(slug);
+    });
+  });
+}
